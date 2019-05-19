@@ -9,19 +9,19 @@
 
 /*CONSTANTES*/
 #define LINHA1 2//borda: da espaco para colocar vidas e pontos
-#define COLUNA1 4//borda: da espaco para colocar oxigenio
-#define LINHA2 25//borda: final da tela
+#define COLUNA1 1//borda: da espaco para colocar oxigenio
+#define LINHA2 23//borda: final da tela
 #define COLUNA2 80//borda: final da tela
 
 #define INIMIGO 1//para identificar o tipo de obstaculo
 #define MERGULHADOR 2//para identificar o tipo de obstaculo
-#define QTDOBSTACULOS 7
-#define QTDSUBINIMIGOS 7
-#define QTDMERGULHADORES 7
+#define QTDOBSTACULOS 6
+#define QTDSUBINIMIGOS 9
+#define QTDMERGULHADORES 5
 #define CAPTURADO 1//se o submarino inimigo foi atingido ou o mergulhador capturado
 #define LIVRE 2//se o submarino inimigo ou o mergulhador esta livre na tela
-#define PORCENTAGEMMERGULHADORES 30//porcentagem maxima da quantidade de mergulhadores(para fazer spawn randomico)
-#define PORCENTAGEMSUBMARINOSINIMIGOS 70//porcentagem maxima da quantidade de submarinos inimigos(para fazer spawn de submarinos inimigos)
+#define PORCENTAGEMMERGULHADORES 40//porcentagem maxima da quantidade de mergulhadores(para fazer spawn randomico)
+#define PORCENTAGEMSUBMARINOSINIMIGOS 60//porcentagem maxima da quantidade de submarinos inimigos(para fazer spawn de submarinos inimigos)
 
 #define INICIOXSUBMARINO 5//valor de X do primeiro spawn do jogador
 #define INICIOYSUBMARINO 3//valor de Y do primeiro spawn do jogador
@@ -47,6 +47,150 @@ typedef struct submarino{//estrutura do jogador
 } SUBMARINO;
 
 typedef struct obstaculo{//estrutura dos obstaculos (submarinos inimgos ou mergulhadores)
+    int tipo;//tipo de cada obstaculo (1: SUBMARINO INIMIGO e 2: MERGULHADOR)
+    COORD posicao;// posicao X e Y dos obstaculos na tela
+    int orientacao;//e a orientacao (1 - direita ou 0 - esquerda) dos obstaculos
+    int status;//status do obstaculo(1 - capturado 2 - livre)
+} OBSTACULO;
+
+void apagaObstaculo(OBSTACULO obstaculo[], int i){
+    if(obstaculo[i].tipo == INIMIGO){
+        if(obstaculo[i].orientacao == DIREITA){
+            cputsxy(obstaculo[i].posicao.X + 3, obstaculo[i].posicao.Y, "      ");
+            cputsxy(obstaculo[i].posicao.X, obstaculo[i].posicao.Y + 1, "          ");
+        }else{
+            if(obstaculo[i].orientacao == ESQUERDA){
+                cputsxy(obstaculo[i].posicao.X + 1, obstaculo[i].posicao.Y, "      ");
+                cputsxy(obstaculo[i].posicao.X, obstaculo[i].posicao.Y + 1, "          ");
+            }
+        }
+    }else{
+        if(obstaculo[i].tipo == MERGULHADOR){
+            if(obstaculo[i].orientacao == DIREITA){
+                cputsxy(obstaculo[i].posicao.X, obstaculo[i].posicao.Y, "    ");
+            }else{
+                if(obstaculo[i].orientacao == ESQUERDA){
+                    cputsxy(obstaculo[i].posicao.X, obstaculo[i].posicao.Y, "    ");
+                }
+            }
+        }
+    }
+}
+void desenhaObstaculo(OBSTACULO obstaculo[], int i){
+    if(obstaculo[i].tipo == MERGULHADOR){
+        textcolor(LIGHTGREEN);
+        if(obstaculo[i].orientacao == DIREITA){
+            cputsxy(obstaculo[i].posicao.X, obstaculo[i].posicao.Y, ">->o");
+        }else{
+            if(obstaculo[i].orientacao == ESQUERDA){
+                cputsxy(obstaculo[i].posicao.X, obstaculo[i].posicao.Y, "o<-<");
+            }
+        }
+    }else{
+        if(obstaculo[i].tipo == INIMIGO){
+            textcolor(LIGHTGRAY);
+            if(obstaculo[i].orientacao == DIREITA){
+                cputsxy(obstaculo[i].posicao.X + 3, obstaculo[i].posicao.Y, "_|o|__");
+                cputsxy(obstaculo[i].posicao.X, obstaculo[i].posicao.Y + 1, "[+(______)");
+            }else{
+                if(obstaculo[i].orientacao == ESQUERDA){
+                    cputsxy(obstaculo[i].posicao.X + 1, obstaculo[i].posicao.Y, "__|o|_");
+                    cputsxy(obstaculo[i].posicao.X, obstaculo[i].posicao.Y + 1, "(______)+]");
+                }
+            }
+        }
+    }
+}
+void moveObstaculo(OBSTACULO obstaculo[]){
+    int i;
+    for(i=0;i<QTDOBSTACULOS;i++){
+        Sleep(2.6);
+        if(obstaculo[i].tipo == INIMIGO){
+            apagaObstaculo(obstaculo, i);
+            if(obstaculo[i].orientacao == DIREITA){
+                obstaculo[i].posicao.X++;
+                if(obstaculo[i].posicao.X >= COLUNA2 - 10){
+                    obstaculo[i].posicao.X--;
+                    apagaObstaculo(obstaculo, i);
+                    obstaculo[i].tipo = -1;
+                }
+                desenhaObstaculo(obstaculo, i);
+            }else{
+                if(obstaculo[i].orientacao == ESQUERDA){
+                    obstaculo[i].posicao.X--;
+                    if(obstaculo[i].posicao.X <= COLUNA1){
+                        obstaculo[i].posicao.X++;
+                        apagaObstaculo(obstaculo, i);
+                        obstaculo[i].tipo = -1;
+                    }
+                    desenhaObstaculo(obstaculo, i);
+            }
+        }
+    }else{
+        if(obstaculo[i].tipo == MERGULHADOR){
+                apagaObstaculo(obstaculo, i);
+                if(obstaculo[i].orientacao == DIREITA){
+                    obstaculo[i].posicao.X++;
+                    if(obstaculo[i].posicao.X >= COLUNA2 - 4){
+                        obstaculo[i].posicao.X--;
+                        apagaObstaculo(obstaculo, i);
+                        obstaculo[i].tipo = -1;
+                    }
+                    desenhaObstaculo(obstaculo, i);
+                }else{
+                    if(obstaculo[i].orientacao == ESQUERDA){
+                        obstaculo[i].posicao.X--;
+                        if(obstaculo[i].posicao.X <= COLUNA1){
+                            obstaculo[i].posicao.X++;
+                            apagaObstaculo(obstaculo, i);
+                            obstaculo[i].tipo = -1;
+                        }
+                        desenhaObstaculo(obstaculo, i);
+                    }
+                }
+            }
+        }
+    }
+}
+void geraObstaculo(OBSTACULO obstaculo[]){
+    int i;
+    srand(time(0));
+    for(i=0;i<QTDOBSTACULOS;i++){
+        if(rand()%100 <= PORCENTAGEMMERGULHADORES){//checa probabilidade para inicializar o mergulhador
+            if(obstaculo[i].tipo != MERGULHADOR && obstaculo[i].tipo != INIMIGO){
+                obstaculo[i].tipo = MERGULHADOR;
+                if(rand()%2 == 1){//inicializa mergulhador no lado direito
+                    obstaculo[i].orientacao = ESQUERDA;
+                    obstaculo[i].posicao.X = COLUNA2 - 4;
+                    obstaculo[i].posicao.Y = 5 + i*3;
+                }else{
+                    if(rand()%2 == 0){//inicializa mergulhador no lado direito
+                        obstaculo[i].orientacao = DIREITA;
+                        obstaculo[i].posicao.X = COLUNA1 + 1;
+                        obstaculo[i].posicao.Y = 5 + i*3;
+                    }
+                }
+            }
+        }
+        if(rand()%100 > PORCENTAGEMMERGULHADORES){
+            if(obstaculo[i].tipo != MERGULHADOR && obstaculo[i].tipo != INIMIGO){
+                obstaculo[i].tipo = INIMIGO;
+                if(rand()%2 == 1){//inicializa mergulhador no lado direito
+                    obstaculo[i].orientacao = ESQUERDA;
+                    obstaculo[i].posicao.X = COLUNA2 - 10;
+                    obstaculo[i].posicao.Y = 5 + i*3;
+                }else{
+                    if(rand()%2 == 0){//inicializa mergulhador no lado direito
+                        obstaculo[i].orientacao = DIREITA;
+                        obstaculo[i].posicao.X = COLUNA1 + 1;
+                        obstaculo[i].posicao.Y = 5 + i*3;
+                    }
+                }
+            }
+        }
+    }
+}
+/*typedef struct obstaculo{//estrutura dos obstaculos (submarinos inimgos ou mergulhadores)
     int tipo;//tipo de cada obstaculo (1: SUBMARINO INIMIGO e 2: MERGULHADOR)
     COORD posicao;// posicao X e Y dos obstaculos na tela
     int orientacao;//e a orientacao (1 - direita ou 0 - esquerda) dos obstaculos
@@ -114,7 +258,7 @@ void moveObstaculo(SUB_INIMIGOS submarinoInimigo[], MERGULHADORES mergulhador[])
                     apagaObstaculo(submarinoInimigo, mergulhador, i);
                 desenhaObstaculo(submarinoInimigo, mergulhador, i);
                 }else{
-                    if(submarinoInimigo[i].orientacao == ESQUERDA){
+             else       if(submarinoInimigo[i].orientacao == ESQUERDA){
                         submarinoInimigo[i].posicao.X--;
                         if(submarinoInimigo[i].posicao.X <= COLUNA1)
                             apagaObstaculo(submarinoInimigo, mergulhador, i);
@@ -181,7 +325,7 @@ void inicializaObstaculos(SUB_INIMIGOS submarinoInimigo[], MERGULHADORES mergulh
             }
         }
     }
-}
+}*/
 void apagaSubmarino(SUBMARINO jogador){//funcao para apagar o rastro do jogador
     if(jogador.orientacao == DIREITA){
         cputsxy(jogador.posicao.X + 3, jogador.posicao.Y, "        ");
@@ -263,24 +407,24 @@ void moveJogador(SUBMARINO *jogador, char *flag_fim){//funcao para mover jogador
 }
 void gameLoop(){//laco do jogo
     char tecla;//flag para fim do jogo
-    int contador = 0;
     SUBMARINO jogador;//estrutura do submarino
-    SUB_INIMIGOS submarinoInimigo[QTDSUBINIMIGOS];
-    MERGULHADORES mergulhador[QTDMERGULHADORES];
+    OBSTACULO obstaculo[QTDOBSTACULOS];
     jogador.posicao.X = INICIOXSUBMARINO;//coordenadas para inicializar o submarino
     jogador.posicao.Y = INICIOYSUBMARINO;
     jogador.orientacao = DIREITA;//o submarino e inicializado voltado para a direira
     desenhaSubmarino(jogador);
     do{
+        geraObstaculo(obstaculo);
         moveJogador(&jogador, &tecla);//chama attraves de ponteiro pos alterara os valores da posicao do submarino
-        inicializaObstaculos(submarinoInimigo, mergulhador);
-        moveObstaculo(submarinoInimigo, mergulhador);
+        moveObstaculo(obstaculo);
     }while(tecla != 27);//jogo roda enquanto o jogador nao teclou ESC
 }
 
 
 
 int main(){
+    COORD coordinate = {COLUNA2+2, LINHA1};
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coordinate);
     menu();
     return 0;
 }
@@ -304,6 +448,14 @@ void menu(){
         cputsxy(5, 13,"   \\ \\ \\/  \\/__/\\/_/ \\/__/ \\/_/ \\/___/ \\/____/");
         cputsxy(5, 14,"    \\ \\_\\");
         cputsxy(5, 15,"     \\/_/");
+
+        cputsxy(7, 17,"                  _");
+        cputsxy(7, 18,"  .         _____|___");
+        cputsxy(7, 19," .      ___/  o o o  \\___");
+        cputsxy(7, 20," .     /    ---------    \\ ");
+        cputsxy(7, 21,"  .   |     ---------     |");
+        cputsxy(7, 22,"    8-=\\_________________/");
+
         putchxy(posSX, posSY, '>');
         imprimeBordaMenu();
         coloreLinhaMenu(&posSY);
@@ -423,7 +575,7 @@ void gameInterface(){
     int i,j;
     textcolor(LIGHTMAGENTA);
     cputsxy(1, 1, "LIFE <3 <3 <3");
-    cputsxy(68, 1, "PONTOS XX");
+    cputsxy(70, 1, "PONTOS XX");
     desenhaAgua();
     textcolor(DARKGRAY);
     for (i=LINHA1;i<LINHA2;i++){//constroi os limites vericais do cenario
@@ -434,10 +586,17 @@ void gameInterface(){
             putchxy (i, LINHA1, cell);
             putchxy (i, LINHA2, cell);
    }
+   textcolor(LIGHTMAGENTA);
+   cputsxy(1, LINHA2 + 1, "O2 ");
+   for(i=4;i<COLUNA2 - 50;i ++){
+        cputsxy(i, LINHA2 + 1, "|");
+
+   }
+   cputsxy(i, LINHA2 + 1, "]");
 }
 void desenhaAgua(){
     textcolor(LIGHTCYAN);
-    cputsxy(5, 4, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+    cputsxy(2, 4, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 }
 
 
