@@ -43,6 +43,9 @@ void coloreLinhaMenu(int *posSY);//colore a linha na qual o seletor esta
 void gameInterface();//imprime a interface
 void desenhaAgua();//desenha a agua
 
+//PRECISA:
+//CASO O STATUS DO MARINHEIRO SEJA 'CAPTURADO' NAO INICIALIZAR
+//FUNCAO PARA SOLTAR MERGULHADORES CAPTURADOS ALTERANDO PORTANTO O STATUS DELES PARA 'LIVRE' E SETAR JOGADOR.MERGULHADORES PARA 0;
 
 typedef struct submarino{//estrutura do jogador
     COORD posicao;//COORD e uma estrutura com X e Y
@@ -204,8 +207,9 @@ void geraObstaculo(OBSTACULO obstaculo[]){//inicializa os obstaculos randomicame
     srand(time(0));//iniciar o random
     for(i=0;i<QTDOBSTACULOS;i++){
         if(rand()%100 <= PORCENTAGEMMERGULHADORES){//checa probabilidade para inicializar o mergulhador
-            if(obstaculo[i].tipo != MERGULHADOR && obstaculo[i].tipo != INIMIGO){//verifica se o obstaculo ja nao esta inicializado
+            if(obstaculo[i].tipo != MERGULHADOR && obstaculo[i].tipo != INIMIGO && obstaculo[i].status != CAPTURADO){//verifica se o obstaculo ja nao esta inicializado
                 obstaculo[i].tipo = MERGULHADOR;//o tipo do obstaculo e setado para mergulhador
+                obstaculo[i].status = LIVRE;
                 if(rand()%2 == 1){//inicializa mergulhador no lado direito
                     obstaculo[i].orientacao = ESQUERDA;
                     obstaculo[i].posicao.X = COLUNA2 - 4;
@@ -222,6 +226,7 @@ void geraObstaculo(OBSTACULO obstaculo[]){//inicializa os obstaculos randomicame
         if(rand()%100 > PORCENTAGEMMERGULHADORES){//checa a probabilidade para iniciar submarinos inimigos
             if(obstaculo[i].tipo != MERGULHADOR && obstaculo[i].tipo != INIMIGO){//verifica se o obstaculo ja nao esta inicializado
                 obstaculo[i].tipo = INIMIGO;//tipo do obstaculo setado para inimigo
+                obstaculo[i].status = LIVRE;
                 if(rand()%2 == 1){//inicializa mergulhador no lado direito
                     obstaculo[i].orientacao = ESQUERDA;
                     obstaculo[i].posicao.X = COLUNA2 - 10;
@@ -262,10 +267,14 @@ void testaColisao(SUBMARINO *jogador, OBSTACULO obstaculo[]){//verifica se houve
                    ((*jogador).posicao.Y < obstaculo[i].posicao.Y + 1) &&//verifica se Y2(obstaculo) esta entre Y1(submarino) + ALTURASUBMARINO
                    ((*jogador).posicao.Y + ALTURASUBMARINO > obstaculo[i].posicao.Y)){//verifica se Y1(submarino) esta entre Y2(mergulhador)
                     //houve colisao
-                    apagaObstaculo(obstaculo, i);//o mergulhador e capturado
-                    obstaculo[i].posicao.X = LINHA1;//a posicao onde o mergulhador e guardado
-                    apagaObstaculo(obstaculo, i);
-                    obstaculo[i].tipo = NADA;//o tipo do obstaculo e setado para NADA para ele poder ser reespawnado
+                    if((*jogador).mergulhadores < 3){
+                        apagaObstaculo(obstaculo, i);//o mergulhador e capturado
+                        obstaculo[i].posicao.X = LINHA1;//a posicao onde o mergulhador e guardado
+                        apagaObstaculo(obstaculo, i);
+                        obstaculo[i].tipo = NADA;//o tipo do obstaculo e setado para NADA para ele poder ser reespawnado
+                        obstaculo[i].status = CAPTURADO;
+                        (*jogador).mergulhadores++;
+                    }
                     desenhaSubmarino(*jogador);
                 }
             }
@@ -340,6 +349,7 @@ void gameLoop(){//laco do jogo
     jogador.posicao.Y = INICIOYSUBMARINO;
     jogador.orientacao = DIREITA;//o submarino e inicializado voltado para a direira
     jogador.vidas = 3;
+    jogador.mergulhadores = 0;
     desenhaSubmarino(jogador);
     do{
         geraObstaculo(obstaculo);
