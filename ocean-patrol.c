@@ -38,6 +38,8 @@
 #define INICIOMERGULHADORESJOGADOR 0
 #define INICIOPONTUACAOJOGADOR 0
 #define INICIOOXIGENIOJOGADOR 30
+#define INICIOPENTEJOGADOR 0
+#define QTDTIROS 5
 
 
 /* PROTOTIPOS */
@@ -58,6 +60,7 @@ typedef struct submarino{//estrutura do jogador
     int oxigenio;//oxigenio do jogador
     int pontuacao;//pontuacao do jogador
     int mergulhadores;//quantidade d emergulhadores capturados
+    int pente;
 } SUBMARINO;
 typedef struct obstaculo{//estrutura dos obstaculos (submarinos inimgos ou mergulhadores)
     int tipo;//tipo de cada obstaculo (1: SUBMARINO INIMIGO e 2: MERGULHADOR)
@@ -65,7 +68,28 @@ typedef struct obstaculo{//estrutura dos obstaculos (submarinos inimgos ou mergu
     int orientacao;//e a orientacao (1 - direita ou 0 - esquerda) dos obstaculos
     int status;//status do obstaculo(1 - capturado 2 - livre)
 } OBSTACULO;
+typedef struct missil{
+    COORD posicao;
+} TIRO;
 
+/*void missilSubmarino(TIRO missil[], SUBMARINO *jogador, char tecla){
+    int i;
+    if(tecla == 32){
+        (*jogador).pente++;
+        i = (*jogador).pente - 1;
+    }
+    for(i=0;i<QTDTIROS;i++){
+        if((*jogador).orientacao == DIREITA){
+            missil[i].posicao.X = (*jogador).posicao.X + LARGURASUBMARINO;
+            missil[i].posicao.Y = (*jogador).posicao.Y + ALTURASUBMARINO;
+            missil[i].posicao.X++;
+        }else{
+            if((*jogador).orientacao == ESQUERDA){
+
+            }
+        }
+    }
+}*/
 void atualizaMergulhadores(SUBMARINO jogador){
     textcolor(LIGHTGREEN);
     if(jogador.mergulhadores == 0){//se o jogador nao capturou nenhum mergulhador
@@ -239,46 +263,46 @@ void desenhaObstaculo(OBSTACULO obstaculo[], int i){//desenha os obstaculos nas 
 }
 void moveObstaculo(OBSTACULO obstaculo[]){//move os obstaculos
     int i;
-    for(i=0;i<QTDOBSTACULOS;i++){
-        if(obstaculo[i].tipo == INIMIGO){
+    for(i=0;i<QTDOBSTACULOS;i++){//varrer todos os obstaculos
+        if(obstaculo[i].tipo == INIMIGO){//verifica se o obstaculo e do tipo inimigo
             apagaObstaculo(obstaculo, i);
-            if(obstaculo[i].orientacao == DIREITA){
-                obstaculo[i].posicao.X++;
-                if(obstaculo[i].posicao.X >= COLUNA2 - 10){
-                    obstaculo[i].posicao.X--;
+            if(obstaculo[i].orientacao == DIREITA){//verifica a orientacao do obstaculo
+                obstaculo[i].posicao.X++;//incrementa a posicao
+                if(obstaculo[i].posicao.X >= COLUNA2 - 10){//verifica se o obstaculo esta na borda
+                    obstaculo[i].posicao.X--;//decrementa posicao
                     apagaObstaculo(obstaculo, i);
-                    obstaculo[i].tipo = -1;
+                    obstaculo[i].tipo = -1;//tipo setado para -1 para poder ser reespawnado
                 }
                 desenhaObstaculo(obstaculo, i);
             }else{
-                if(obstaculo[i].orientacao == ESQUERDA){
-                    obstaculo[i].posicao.X--;
-                    if(obstaculo[i].posicao.X <= COLUNA1){
-                        obstaculo[i].posicao.X++;
+                if(obstaculo[i].orientacao == ESQUERDA){//verifco a orientacao
+                    obstaculo[i].posicao.X--;//decremento a posicao
+                    if(obstaculo[i].posicao.X <= COLUNA1){//verifica se o obstaculo esta na borda
+                        obstaculo[i].posicao.X++;//incrementa posicao
                         apagaObstaculo(obstaculo, i);
-                        obstaculo[i].tipo = -1;
+                        obstaculo[i].tipo = -1;//tipo setado para -1 para poder ser reespawnado
                     }
                     desenhaObstaculo(obstaculo, i);
             }
         }
     }else{
-        if(obstaculo[i].tipo == MERGULHADOR){
+        if(obstaculo[i].tipo == MERGULHADOR){//verifica o tipo do obstaculo
                 apagaObstaculo(obstaculo, i);
-                if(obstaculo[i].orientacao == DIREITA){
-                    obstaculo[i].posicao.X++;
-                    if(obstaculo[i].posicao.X >= COLUNA2 - 4){
-                        obstaculo[i].posicao.X--;
+                if(obstaculo[i].orientacao == DIREITA){//verifica a orientacao
+                    obstaculo[i].posicao.X++;//incrementa posicao
+                    if(obstaculo[i].posicao.X >= COLUNA2 - 4){//verifica se obstaculo esta na borda
+                        obstaculo[i].posicao.X--;//decrementa posicao
                         apagaObstaculo(obstaculo, i);
-                        obstaculo[i].tipo = -1;
+                        obstaculo[i].tipo = -1;//tipo setado para -1 para poder ser reespawnado
                     }
                     desenhaObstaculo(obstaculo, i);
                 }else{
-                    if(obstaculo[i].orientacao == ESQUERDA){
-                        obstaculo[i].posicao.X--;
-                        if(obstaculo[i].posicao.X <= COLUNA1){
-                            obstaculo[i].posicao.X++;
+                    if(obstaculo[i].orientacao == ESQUERDA){//verifica orientacao
+                        obstaculo[i].posicao.X--;//decrementa posicao
+                        if(obstaculo[i].posicao.X <= COLUNA1){//verifcica se obstaculo esta na borda
+                            obstaculo[i].posicao.X++;//incrementa posicao
                             apagaObstaculo(obstaculo, i);
-                            obstaculo[i].tipo = -1;
+                            obstaculo[i].tipo = -1;//tipo setado para -1 para poder ser reespawnado
                         }
                         desenhaObstaculo(obstaculo, i);
                     }
@@ -430,6 +454,9 @@ void moveJogador(SUBMARINO *jogador, char *flag_fim){//funcao para mover jogador
                 desenhaSubmarino(*jogador);
             }//switch
         }//if
+        if(tecla == 32){//verifica se o jogador teclou espaco
+            *flag_fim = 32;
+        }
         if(tecla == 27){//verifica se foi teclado ESC para encerrar o jogo
             *flag_fim = 27;
         }//flag para finalizar o game loop
@@ -442,6 +469,7 @@ void gameLoop(){//laco do jogo
     int posO2X;//variavel da posicao inicial do OXIGENIO
     SUBMARINO jogador;//estrutura do submarino
     OBSTACULO obstaculo[QTDOBSTACULOS];
+    TIRO missil[QTDTIROS];
     jogador.posicao.X = INICIOXSUBMARINO;//coordenadas para inicializar o submarino
     jogador.posicao.Y = INICIOYSUBMARINO;
     jogador.orientacao = DIREITA;//o submarino e inicializado voltado para a direira
@@ -449,6 +477,7 @@ void gameLoop(){//laco do jogo
     jogador.mergulhadores = INICIOMERGULHADORESJOGADOR;//o jogador inicia com 0 mergulhadores capturados
     jogador.pontuacao = INICIOPONTUACAOJOGADOR;//o jogador inicia com 0 pontos
     jogador.oxigenio = INICIOOXIGENIOJOGADOR;//o jogador comeca com 30 pontos de oxigenio
+    //jogador.pente = INICIOPENTEJOGADOR;//o jogador comeca com 0 tiros disparados
     desenhaSubmarino(jogador);
     desenhaVidas(jogador);
     pontuacao(&jogador);
@@ -457,17 +486,14 @@ void gameLoop(){//laco do jogo
         loopPorSegundo(&jogador,&flagGameLoop, &posO2X);//funcao para atualizar a pontuacao
         geraObstaculo(obstaculo);
         moveJogador(&jogador, &tecla);//chama attraves de ponteiro pos alterara os valores da posicao do submarino
+        //missilSubmarino(missil, &jogador, tecla);
         largaMergulhadores(&jogador, obstaculo);
         moveObstaculo(obstaculo);
         testaColisao(&jogador, obstaculo);
     }while(fimJogo(tecla, jogador) != 1);//jogo roda enquanto o jogador nao teclou ESC ou zerou as vidas
 }
 
-
-
 int main(){
-    COORD coordinate = {COLUNA2+2, LINHA1};
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coordinate);
     menu();
     return 0;
 }
