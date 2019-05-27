@@ -444,18 +444,23 @@ void testaColisao(SUBMARINO *jogador, OBSTACULO obstaculo[]){//verifica se houve
         }
     }
 }
-void testaColisaoTiro(TIRO *missil, OBSTACULO obstaculo[]){
+void testaColisaoTiro(SUBMARINO *jogador,TIRO *missil, OBSTACULO obstaculo[]){
     int i;
     for(i=0;i<QTDOBSTACULOS;i++){
         if(obstaculo[i].tipo == INIMIGO){//verifica se o obstaculo e um inimigo
             if(((*missil).posicao.X < obstaculo[i].posicao.X + LARGURASUBINIMIGO - 1) &&//verifica se X2(obstaculo) esta entre X1(submarino) + LARGURASUBMARINO
-               ((*missil).posicao.X < obstaculo[i].posicao.X) &&//verifica se o X1(submarino) esta entre o X2(obstaculo)
-               ((*missil).posicao.Y < obstaculo[i].posicao.Y + ALTURASUBINIMIGO){ //&&//verifica se Y2(obstaculo) esta entre Y1(submarino) + ALTURASUBMARINO
-               ((*missil).posicao.Y > obstaculo[i].posicao.Y)){//verifica se Y1(submarino) esta entre Y2(obstaculo)
+               ((*missil).posicao.X > obstaculo[i].posicao.X) &&//verifica se o X1(submarino) esta entre o X2(obstaculo)
+               ((*missil).posicao.Y < obstaculo[i].posicao.Y + ALTURASUBINIMIGO) &&//verifica se Y2(obstaculo) esta entre Y1(submarino) + ALTURASUBMARINO
+               ((*missil).posicao.Y > obstaculo[i].posicao.Y - 1)){//verifica se Y1(submarino) esta entre Y2(obstaculo)
                 //houve colisao
+                (*jogador).pontuacao += 10;
+                pontuacao(jogador);
                 (*missil).estado = DESLIGADO;
                 apagaTiro(*missil);
                 apagaObstaculo(obstaculo, i);
+                obstaculo[i].posicao.X = COLUNA1 + 12;
+                obstaculo[i].posicao.Y = LINHA2 + 3;
+                desenhaObstaculo(obstaculo, i);
                 obstaculo[i].tipo = NADA;
             }
         }else{
@@ -574,9 +579,9 @@ void gameLoop(){//laco do jogo
         geraObstaculo(obstaculo);
         controlaJogador(&jogador, &tecla);//chama attraves de ponteiro pos alterara os valores da posicao do submarino
         tiroJogador(tecla, jogador, &missil);
-        testaColisaoTiro(&missil, obstaculo);
         largaMergulhadores(&jogador, obstaculo);
         moveObstaculo(obstaculo);
+        testaColisaoTiro(&jogador, &missil, obstaculo);
         testaColisao(&jogador, obstaculo);
     }while(fimJogo(tecla, jogador) != 1);//jogo roda enquanto o jogador nao teclou ESC ou zerou as vidas
 }
