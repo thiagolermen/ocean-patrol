@@ -9,6 +9,17 @@
 #include <conio2.h>
 
 /*=========     CONSTANTES     =========*/
+
+//TECLADO
+#define TECLADOAUXILIAR -32//usuario usou as setas
+#define CIMA 72//seta p cima
+#define BAIXO 80//seta p baixo
+#define ESQUERDATECLA 75//seta p esquerda
+#define DIREITATECLA 77//seta p direita
+#define ESC 27//esc
+#define ENTER 13//enter
+#define ESPACO 32//espaco
+
 //INTERFACE
 #define LINHA1 2//borda: da espaco para colocar vidas e pontos
 #define COLUNA1 1//borda: da espaco para colocar oxigenio
@@ -16,7 +27,7 @@
 #define COLUNA2 80//borda: final da tela
 #define YAGUA 4//agua: coordenada Y onde a agua sera desenhada
 #define XAGUA 2//agua: coordenada X onde a agua sera desenhada
-#define INICIOXOXIGENIO 41
+#define INICIOXOXIGENIO 41//posicao inicial do oxigenio
 
 //OBSTACULO
 #define NADA 0//para retirar o tipo do obstaculo para ele ser reinicializado
@@ -32,6 +43,7 @@
 #define LIVRE 2//se o mergulhador esta livre na tela
 
 //JOGADOR
+#define TAMSTRING 10
 #define INICIOXSUBMARINO 5//valor de X do primeiro spawn do jogador
 #define INICIOYSUBMARINO 3//valor de Y do primeiro spawn do jogador
 #define DIREITA 1//orientacao do submarino
@@ -54,10 +66,13 @@ void gameInterface();//imprime a interface
 void desenhaAgua();//desenha a agua
 
 /*=========    PRECISA:    =========*/
-
+//fazer funcoes de salvar jogo em texto
+//fazer funcoes de salvar jogo em .bin
+//fazer funcoes para abrir o jogo salvo
 
 typedef struct submarino{//estrutura do jogador
     COORD posicao;//COORD e uma estrutura com X e Y
+    char nome[TAMSTRING];
     int orientacao;//orientacao do submarino(direita = 1 ou esquerda = 0)
     int vidas;//vidas do jogador
     int oxigenio;//oxigenio do jogador
@@ -76,7 +91,208 @@ typedef struct missil{
     int estado;// booleano 0 ou 1
 } TIRO;
 
-
+//void salvaJogador(){}
+//void salvaJogo(SUBMARINO jogador){}
+//void abreJogo(){}
+int procuraJogo(FILE *jogo){
+    char nomeArquivo[TAMSTRING];
+    gotoxy(30, 13);
+    scanf("%s", nomeArquivo);
+    jogo = fopen(nomeArquivo, "rb");
+    if(jogo == NULL){
+        return 1;
+    }else{
+        return 0;
+    }
+}
+void interfaceProcuraArquivo(){
+    textcolor(LIGHTCYAN);
+    cputsxy(25, 10, "*********************************");
+    textcolor(YELLOW);
+    cputsxy(25, 11, "           CARREGAR JOGO         ");
+    textcolor(DARKGRAY);
+    cputsxy(25, 12, "     DIGITE O NOME DO ARQUIVO       ");
+    textcolor(LIGHTCYAN);
+    cputsxy(25, 16, "*********************************");
+}
+void moveSeletorCarrega(char *select, int *posSX, int *posSY){
+    textcolor(YELLOW);
+    putchxy(*posSX, *posSY, '>');
+    *select = getch();
+    if(*select == TECLADOAUXILIAR){//verifica se usou as setas
+        *select = getch();
+        switch(*select){
+        case(CIMA)://CIMA
+            putchxy(*posSX, *posSY, '\0');
+            if(*posSY == 13){//verifica se esta no 'buscar um arquivo'
+                *posSY = 14;//volta para 'sair'
+                putchxy(*posSX, *posSY, '>');
+            }else{
+                (*posSY)--;
+                putchxy(*posSX, *posSY, '>');
+            }
+            break;
+        case(BAIXO)://BAIXO
+            putchxy(*posSX, *posSY, '\0');
+            if(*posSY == 14){//verifica se esta no 'sair'
+                *posSY = 13;//volta para 'buscar um arquivo'
+                putchxy(*posSX, *posSY, '>');
+            }else{
+                (*posSY)++;
+                putchxy(*posSX, *posSY, '>');
+            }//else
+        }//switch
+    }//if select
+}
+void interfaceCarregaJogo(){
+    textcolor(LIGHTCYAN);
+    cputsxy(25, 10, "*********************************");
+    textcolor(YELLOW);
+    cputsxy(25, 11, "           CARREGAR JOGO         ");
+    cputsxy(25, 12, "                                 ");
+    textcolor(DARKGRAY);
+    cputsxy(25, 13, "         BUSCAR UM ARQUIVO       ");
+    cputsxy(25, 14, "               SAIR              ");
+    textcolor(LIGHTCYAN);
+    cputsxy(25, 16, "*********************************");
+}
+void coloreLinhaCarrega(int posSY){
+    switch(posSY){//verifica em qual posicao o seletor esta
+    case(13)://resume game
+        textcolor(DARKGRAY);
+        cputsxy(25, 14, "               SAIR              ");
+        textcolor(YELLOW);
+        cputsxy(25, 13, "         BUSCAR UM ARQUIVO       ");
+        break;
+    case(14)://salvar e sair
+        textcolor(DARKGRAY);
+        cputsxy(25, 13, "         BUSCAR UM ARQUIVO       ");
+        textcolor(YELLOW);
+        cputsxy(25, 14, "               SAIR              ");
+    }
+}
+void carregaJogo(FILE *jogo){
+    int posSX = 25, posSY = 13;//posicao inicial do seletor. comeca em 'buscar um arquivo'
+    int ansCarrega = 0;//flag para fim do loop do 'carregaJogo'
+    char select;//guarda o valor do teclado para mover seletor
+    do{
+        interfaceCarregaJogo();
+        putchxy(posSX, posSY, '>');
+        coloreLinhaCarrega(posSY);
+        moveSeletorCarrega(&select, &posSX, &posSY);
+        if(select == ENTER){//verifica se o usuario apertou enter
+            switch(posSY){//verifica em qual posicao o seletor esta
+            case(13)://buscar um arquivo
+                clrscr();
+                interfaceProcuraArquivo();
+                if (procuraJogo(jogo) != 0){
+                    textcolor(LIGHTMAGENTA);
+                    cputsxy(28, 15, "ERRO NA ABERTURA DO ARQUIVO!");
+                }else{
+                    //abreJogo();
+                }
+                break;
+            case(14)://sair
+                clrscr();
+                ansCarrega = 1;
+            }
+        }
+    }while(ansCarrega != 1);
+}
+void moveSeletorPause(char *select, int *posSX, int *posSY){
+    textcolor(YELLOW);
+    putchxy(*posSX, *posSY, '>');
+    *select = getch();
+    if(*select == TECLADOAUXILIAR){//verifica se usou as setas
+        *select = getch();
+        switch(*select){
+        case(CIMA)://CIMA
+            putchxy(*posSX, *posSY, '\0');
+            if(*posSY == 13){//verifica se esta no 'resume game'
+                *posSY = 15;//volta para 'sair'
+                putchxy(*posSX, *posSY, '>');
+            }else{
+                (*posSY)--;
+                putchxy(*posSX, *posSY, '>');
+            }
+            break;
+        case(BAIXO)://BAIXO
+            putchxy(*posSX, *posSY, '\0');
+            if(*posSY == 15){//verifica se esta no 'sair'
+                *posSY = 13;//volta para 'resume game'
+                putchxy(*posSX, *posSY, '>');
+            }else{
+                (*posSY)++;
+                putchxy(*posSX, *posSY, '>');
+            }//else
+        }//switch
+    }//if select
+}
+void coloreLinhaPause(int posSY){
+    switch(posSY){//verifica em qual posicao o seletor esta
+    case(13)://resume game
+        textcolor(DARKGRAY);
+        cputsxy(25, 14, "          SALVAR E SAIR          ");
+        cputsxy(25, 15, "              SAIR               ");
+        textcolor(YELLOW);
+        cputsxy(25, 13, "           RESUME GAME           ");
+        break;
+    case(14)://salvar e sair
+        textcolor(DARKGRAY);
+        cputsxy(25, 13, "           RESUME GAME           ");
+        cputsxy(25, 15, "              SAIR               ");
+        textcolor(YELLOW);
+        cputsxy(25, 14, "          SALVAR E SAIR          ");
+        break;
+    case(15)://sair
+        textcolor(DARKGRAY);
+        cputsxy(25, 13, "           RESUME GAME           ");
+        cputsxy(25, 14, "          SALVAR E SAIR          ");
+        textcolor(YELLOW);
+        cputsxy(25, 15, "              SAIR               ");
+    }
+}
+void interfacePause(){
+    textcolor(LIGHTCYAN);
+    cputsxy(25, 10, "*********************************");
+    textcolor(YELLOW);
+    cputsxy(25, 11, "              PAUSE              ");
+    cputsxy(25, 12, "                                 ");
+    textcolor(DARKGRAY);
+    cputsxy(25, 13, "           RESUME GAME           ");
+    cputsxy(25, 14, "          SALVAR E SAIR          ");
+    cputsxy(25, 15, "              SAIR               ");
+    textcolor(LIGHTCYAN);
+    cputsxy(25, 16, "*********************************");
+}
+void pause(SUBMARINO *jogador){
+    int posSX = 25, posSY = 13;//posicao inicial do seletor. comeca em 'resume game'
+    int ansPause = 0;//flag para fim do loop do 'pause'
+    char select;//guarda o valor do teclado para mover seletor
+    clrscr();
+    do{
+        interfacePause();
+        putchxy(posSX, posSY, '>');
+        coloreLinhaPause(posSY);
+        moveSeletorPause(&select, &posSX, &posSY);
+        if(select == ENTER){//verifica se o usuario apertou enter
+            switch(posSY){//verifica em qual posicao o seletor esta
+            case(13)://resume game
+                clrscr();
+                //abreJogo();
+                break;
+            case(14)://salvar e sair
+                clrscr();
+                //salvaJogo
+                ansPause = 1;
+                break;
+            case(15)://sair
+                clrscr();
+                ansPause = 1;
+            }
+        }
+    }while(ansPause != 1);
+}
 void desenhaTiro(TIRO missil){//imprime o tiro na posicao indicada
     textcolor(YELLOW);
     putchxy(missil.posicao.X, missil.posicao.Y, '=');
@@ -155,7 +371,7 @@ void atualizaMergulhadores(SUBMARINO jogador){
     }
 }
 int atualizaOxigenio(SUBMARINO *jogador, int *posO2X){
-    textcolor(LIGHTMAGENTA);
+    textcolor(YELLOW);
     if((*jogador).oxigenio == 30){
         *posO2X = INICIOXOXIGENIO;
     }
@@ -171,7 +387,7 @@ int atualizaOxigenio(SUBMARINO *jogador, int *posO2X){
             if((*jogador).oxigenio < 30){//verificar se o oxigenio chega  a 30 para para parar de incrementar
                 (*jogador).oxigenio++;
                 textbackground(YELLOW);
-                cputsxy(*posO2X, LINHA2 + 2, "|");
+                cputsxy(*posO2X, LINHA2 + 2, " ");
                 textbackground(0);
                 (*posO2X)++;
             }
@@ -236,7 +452,7 @@ void desenhaVidas(SUBMARINO jogador){
 
 }
 int fimJogo(char tecla, SUBMARINO jogador){//verifica as possibilidades de gameOver ou fechar
-    if(tecla == 27 || jogador.vidas == 0 || jogador.oxigenio == 0)
+    if(tecla == ESC || jogador.vidas == 0 || jogador.oxigenio == 0)
         return 1;
     else
         return 0;
@@ -484,10 +700,10 @@ void controlaJogador(SUBMARINO *jogador, char *flag_fim){//funcao para mover jog
     *flag_fim = NADA;
     if(kbhit()){//vevrifica se o jogador apertou alguma tecla
         tecla = getch();
-        if (tecla == -32){//verifica se foi utilizado o teclado auxiliar
+        if (tecla == TECLADOAUXILIAR){//verifica se foi utilizado o teclado auxiliar
             tecla = getch();
             switch(tecla){
-            case(75)://ESQUERDA
+            case(ESQUERDATECLA)://ESQUERDA
                 apagaSubmarino(*jogador);
                 ((*jogador).posicao.X)--;
                 if((*jogador).posicao.X <= COLUNA1){//verifica se o jogador esta atingindo o limite da area de jogo
@@ -499,7 +715,7 @@ void controlaJogador(SUBMARINO *jogador, char *flag_fim){//funcao para mover jog
                 (*jogador).orientacao = ESQUERDA;//atualiza orientacao para a funcao desenhaSubmarino
                 desenhaSubmarino(*jogador);
                 break;
-            case(77)://DIREITA
+            case(DIREITATECLA)://DIREITA
                 apagaSubmarino(*jogador);
                 ((*jogador).posicao.X)++;
                 if((*jogador).posicao.X >= COLUNA2-11){//verifica se o jogador esta atingindo o limite da area de jogo
@@ -512,7 +728,7 @@ void controlaJogador(SUBMARINO *jogador, char *flag_fim){//funcao para mover jog
                 (*jogador).orientacao = DIREITA;//atualiza orientacao para a funcao desenhaSubmarino
                 desenhaSubmarino(*jogador);
                 break;
-            case(72)://CIMA
+            case(CIMA)://CIMA
                 apagaSubmarino(*jogador);
                 ((*jogador).posicao.Y)--;
                 if((*jogador).posicao.Y <= LINHA1){//verifica se o jogador esta atingindo o limite da area de jogo
@@ -523,7 +739,7 @@ void controlaJogador(SUBMARINO *jogador, char *flag_fim){//funcao para mover jog
                 }
                 desenhaSubmarino(*jogador);
                 break;
-            case(80)://BAIXO
+            case(BAIXO)://BAIXO
                 apagaSubmarino(*jogador);
                 ((*jogador).posicao.Y)++;
                 if((*jogador).posicao.Y >= LINHA2-1){//verifica se o jogador esta atingindo o limite da area de jogo
@@ -535,106 +751,106 @@ void controlaJogador(SUBMARINO *jogador, char *flag_fim){//funcao para mover jog
                 desenhaSubmarino(*jogador);
             }//switch
         }//if
-        if(tecla == 27){//verifica se foi teclado ESC para encerrar o jogo
-            *flag_fim = 27;
+        if(tecla == ESC){//verifica se foi teclado ESC para encerrar o jogo
+            *flag_fim = ESC;
         }//flag para finalizar o game loop
-        if(tecla == 32){
-            *flag_fim = 32;
+        if(tecla == ESPACO){
+            *flag_fim = ESPACO;
             fflush(stdin);
         }
-        //fimJogo(*flag_fim, *jogador);
     }//KBHIT
 }//funcao
-/*void leTecla(char *tecla){
-    char auxiliar;
-    if(kbhit()){
-        auxiliar = getch();
-        if(auxiliar == 32){
-            *tecla = 32;
-        }
-        if(auxiliar == 27){
-            *tecla = 27;
-        }
-    }
-}*/
-void gameLoop(){//laco do jogo
+void inicializaJogador(SUBMARINO *jogador){
+    (*jogador).posicao.X = INICIOXSUBMARINO;//coordenadas para inicializar o submarino
+    (*jogador).posicao.Y = INICIOYSUBMARINO;
+    (*jogador).orientacao = DIREITA;//o submarino e inicializado voltado para a direira
+    (*jogador).vidas = INICIOVIDASJOGADOR;//o jogador inicia com 3 vidas
+    (*jogador).mergulhadores = INICIOMERGULHADORESJOGADOR;//o jogador inicia com 0 mergulhadores capturados
+    (*jogador).pontuacao = INICIOPONTUACAOJOGADOR;//o jogador inicia com 0 pontos
+    (*jogador).oxigenio = INICIOOXIGENIOJOGADOR;//o jogador comeca com 30 pontos de oxigenio
+}
+void gameLoop(SUBMARINO *jogador){//laco do jogo
     char tecla;//flag para fim do jogo
-    int flagGameLoop = 0;//plag para atualizar pontuacao
+    int flagGameLoop = 0;//flag para atualizar pontuacao
     int posO2X;//variavel da posicao inicial do OXIGENIO
-    SUBMARINO jogador;//estrutura do submarino
-    jogador.posicao.X = INICIOXSUBMARINO;//coordenadas para inicializar o submarino
-    jogador.posicao.Y = INICIOYSUBMARINO;
-    jogador.orientacao = DIREITA;//o submarino e inicializado voltado para a direira
-    jogador.vidas = INICIOVIDASJOGADOR;//o jogador inicia com 3 vidas
-    jogador.mergulhadores = INICIOMERGULHADORESJOGADOR;//o jogador inicia com 0 mergulhadores capturados
-    jogador.pontuacao = INICIOPONTUACAOJOGADOR;//o jogador inicia com 0 pontos
-    jogador.oxigenio = INICIOOXIGENIOJOGADOR;//o jogador comeca com 30 pontos de oxigenio
     TIRO missil;//estrutura do tiro
     missil.estado = DESLIGADO;//estado do missil e inicializado como DESLIGADO para o jogador poder atirar
     OBSTACULO obstaculo[QTDOBSTACULOS];//estrutura do vetor de obstaculos
-    desenhaSubmarino(jogador);
-    desenhaVidas(jogador);
-    pontuacao(&jogador);
+    desenhaSubmarino(*jogador);
+    desenhaVidas(*jogador);
+    pontuacao(jogador);
     do{
         Sleep(25);//para deixar mais lento o jogo
-        loopPorSegundo(&jogador,&flagGameLoop, &posO2X);//funcao para atualizar a pontuacao
+        loopPorSegundo(jogador,&flagGameLoop, &posO2X);//funcao para atualizar a pontuacao
         geraObstaculo(obstaculo);
-        controlaJogador(&jogador, &tecla);//chama attraves de ponteiro pos alterara os valores da posicao do submarino
-        tiroJogador(tecla, jogador, &missil);
-        largaMergulhadores(&jogador, obstaculo);
+        controlaJogador(jogador, &tecla);//chama attraves de ponteiro pos alterara os valores da posicao do submarino
+        tiroJogador(tecla, *jogador, &missil);
+        largaMergulhadores(jogador, obstaculo);
         moveObstaculo(obstaculo);
-        testaColisaoTiro(&jogador, &missil, obstaculo);
-        testaColisao(&jogador, obstaculo);
-    }while(fimJogo(tecla, jogador) != 1);//jogo roda enquanto o jogador nao teclou ESC ou zerou as vidas
+        testaColisaoTiro(jogador, &missil, obstaculo);
+        testaColisao(jogador, obstaculo);
+    }while(fimJogo(tecla, *jogador) != 1);//jogo roda enquanto o jogador nao teclou ESC ou zerou as vidas
+    if (tecla == ESC){
+        pause(jogador);
+    }else{
+        if((*jogador).vidas == 0){
+            //salvaJogador(jogador);
+        }
+    }
 }
-
+void interfaceMenu(){//desenha a interface do menu
+    textcolor(LIGHTCYAN);
+    cputsxy(5, 2,"     ___     ___      __      __       ___");
+    cputsxy(5, 3,"   / __`\\  /'___\\  /'__`\\  /'__`\\   /' _ `\\");
+    cputsxy(5, 4,"  /\\ \\L\\ \\/\\ \\__/ /\\  __/ /\\ \\L\\.\\_ /\\ \\/\\ \\");
+    cputsxy(5, 5,"  \\ \\____/\\ \\____\\\\ \\____\\\\ \\__/.\\_\\\\ \\_\\ \\_\\");
+    cputsxy(5, 6,"   \\/___/  \\/____/ \\/____/ \\/__/\\/_/ \\/_/\\/_/");
+    cputsxy(5, 7,"                  __                 ___");
+    cputsxy(5, 8,"                 /\\ \\__             /\\_ \\");
+    cputsxy(5, 9,"  _____      __  \\ \\ ,_\\  _ __   ___\\//\\ \\");
+    cputsxy(5, 10, " /\\ '__`\\  /'__`\\ \\ \\ \\/ /\\`'__\\/ __`\\\\ \\ \\");
+    cputsxy(5, 11," \\ \\ \\L\\ \\/\\ \\L\\.\\_\\ \\ \\_\\ \\ \\//\\ \\L\\ \\\\_\\ \\_");
+    cputsxy(5, 12,"  \\ \\ ,__/\\ \\__/.\\_\\\\ \\__\\\\ \\_\\\\ \\____//\\____\\");
+    cputsxy(5, 13,"   \\ \\ \\/  \\/__/\\/_/ \\/__/ \\/_/ \\/___/ \\/____/");
+    cputsxy(5, 14,"    \\ \\_\\");
+    cputsxy(5, 15,"     \\/_/");
+    textcolor(YELLOW);
+    cputsxy(7, 17,"                  _");
+    cputsxy(7, 18,"  .         _____|___");
+    cputsxy(7, 19," .      ___/  o o o  \\___");
+    cputsxy(7, 20," .     /    ---------    \\ ");
+    cputsxy(7, 21,"  .   |     ---------     |");
+    cputsxy(7, 22,"    8-=\\_________________/");
+}
 int main(){
     menu();
     return 0;
 }
-
 void menu(){
     char select;//guarda o valor do teclado para mover o seletor
     int posSX = 54, posSY = 6;//posicao inicial do seletor. comeca em 'novo jogo'
     int ansMenu;//flag para fim do loop do 'menu'
+    SUBMARINO jogador;
+    FILE *jogo;
     do{
-        textcolor(LIGHTCYAN);
-        cputsxy(5, 2,"     ___     ___      __      __       ___");
-        cputsxy(5, 3,"   / __`\\  /'___\\  /'__`\\  /'__`\\   /' _ `\\");
-        cputsxy(5, 4,"  /\\ \\L\\ \\/\\ \\__/ /\\  __/ /\\ \\L\\.\\_ /\\ \\/\\ \\");
-        cputsxy(5, 5,"  \\ \\____/\\ \\____\\\\ \\____\\\\ \\__/.\\_\\\\ \\_\\ \\_\\");
-        cputsxy(5, 6,"   \\/___/  \\/____/ \\/____/ \\/__/\\/_/ \\/_/\\/_/");
-        cputsxy(5, 7,"                  __                 ___");
-        cputsxy(5, 8,"                 /\\ \\__             /\\_ \\");
-        cputsxy(5, 9,"  _____      __  \\ \\ ,_\\  _ __   ___\\//\\ \\");
-        cputsxy(5, 10, " /\\ '__`\\  /'__`\\ \\ \\ \\/ /\\`'__\\/ __`\\\\ \\ \\");
-        cputsxy(5, 11," \\ \\ \\L\\ \\/\\ \\L\\.\\_\\ \\ \\_\\ \\ \\//\\ \\L\\ \\\\_\\ \\_");
-        cputsxy(5, 12,"  \\ \\ ,__/\\ \\__/.\\_\\\\ \\__\\\\ \\_\\\\ \\____//\\____\\");
-        cputsxy(5, 13,"   \\ \\ \\/  \\/__/\\/_/ \\/__/ \\/_/ \\/___/ \\/____/");
-        cputsxy(5, 14,"    \\ \\_\\");
-        cputsxy(5, 15,"     \\/_/");
-        textcolor(YELLOW);
-        cputsxy(7, 17,"                  _");
-        cputsxy(7, 18,"  .         _____|___");
-        cputsxy(7, 19," .      ___/  o o o  \\___");
-        cputsxy(7, 20," .     /    ---------    \\ ");
-        cputsxy(7, 21,"  .   |     ---------     |");
-        cputsxy(7, 22,"    8-=\\_________________/");
-
-        putchxy(posSX, posSY, '>');
+        interfaceMenu();
         imprimeBordaMenu();
+        putchxy(posSX, posSY, '>');
         coloreLinhaMenu(&posSY);
         moveSeletor(&select, &posSX, &posSY);
-        if(select == 13){//verifica se o usuario apertou enter
+        if(select == ENTER){//verifica se o usuario apertou enter
             switch(posSY){//verifica em qual posicao o seletor esta
             case(6)://novo jogo
                 clrscr();
                 gameInterface();
-                gameLoop();
+                inicializaJogador(&jogador);
+                gameLoop(&jogador);
+                fclose(jogo);
                 clrscr();
                 break;
             case(7)://carregar jogo
                 clrscr();
+                carregaJogo(jogo);
                 break;
             case(8)://recordes
                 clrscr();
@@ -759,10 +975,9 @@ void gameInterface(){
     textbackground(YELLOW);
     textcolor(YELLOW);
     for(i=10;i<INICIOXOXIGENIO;i ++){//constroi a barra de oxigenio
-        cputsxy(i, LINHA2 + 2, "|");
+        cputsxy(i, LINHA2 + 2, " ");
 
     }
-    //cputsxy(i, LINHA2 + 2, "]");
     textbackground(0);
 }
 void desenhaAgua(){
