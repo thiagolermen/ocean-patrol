@@ -92,7 +92,7 @@ typedef struct missil{
 } TIRO;
 
 //void salvaJogador(){}
-void interfaceSalvaJogo(){
+void interfaceSalvaJogo(){//desenha a interface do salvaJogo
     textcolor(LIGHTCYAN);
     cputsxy(25, 10, "*********************************");
     textcolor(YELLOW);
@@ -102,7 +102,7 @@ void interfaceSalvaJogo(){
     textcolor(LIGHTCYAN);
     cputsxy(25, 16, "*********************************");
 }
-void salvaJogo(FILE *jogo, SUBMARINO jogador){
+void salvaJogo(FILE *jogo, SUBMARINO jogador){//salvo o jogo
     int flagSalvaJogo = 0;
     char nomeArquivo[TAMSTRING];
     interfaceSalvaJogo();
@@ -257,7 +257,7 @@ void atualizaPosicaoTiro(TIRO *missil){//atualiza a posicao do missil de acordo 
 }
 void tiroJogador (char tecla, SUBMARINO jogador, TIRO *missil){//inicializa as caracteristicas da estrutura TIRO
     if((*missil).estado == DESLIGADO){//verifica se o missil nao foi solto
-        if (tecla == 32){//verifica se foi teclado espaco
+        if (tecla == ESPACO){//verifica se foi teclado espaco
             if (jogador.orientacao == DIREITA){//verifica a orientacao do jogador
                 (*missil).posicao.X = jogador.posicao.X + LARGURASUBMARINO;//inicializa as coordenadas do missil
                 (*missil).posicao.Y = jogador.posicao.Y + 1;
@@ -280,7 +280,7 @@ void tiroJogador (char tecla, SUBMARINO jogador, TIRO *missil){//inicializa as c
         }
     }
 }
-void atualizaMergulhadores(SUBMARINO jogador){
+void atualizaMergulhadores(SUBMARINO jogador){//desenha os jogadores capturados na tela
     textcolor(LIGHTGREEN);
     if(jogador.mergulhadores == 0){//se o jogador nao capturou nenhum mergulhador
         cputsxy(63, LINHA2 + 2, "              ");
@@ -298,7 +298,7 @@ void atualizaMergulhadores(SUBMARINO jogador){
         }
     }
 }
-int atualizaOxigenio(SUBMARINO *jogador, int *posO2X){
+int atualizaOxigenio(SUBMARINO *jogador, int *posO2X){//desenha a barra de oxigenio
     textcolor(YELLOW);
     if((*jogador).oxigenio == 30){
         *posO2X = INICIOXOXIGENIO;
@@ -593,7 +593,7 @@ void testaColisao(SUBMARINO *jogador, OBSTACULO obstaculo[]){//verifica se houve
         }
     }
 }
-void testaColisaoTiro(SUBMARINO *jogador,TIRO *missil, OBSTACULO obstaculo[]){
+void testaColisaoTiro(SUBMARINO *jogador,TIRO *missil, OBSTACULO obstaculo[]){//testa se o tiro colidiu com algum obstaculo
     int i;
     for(i=0;i<QTDOBSTACULOS;i++){
         if(obstaculo[i].tipo == INIMIGO){//verifica se o obstaculo e um inimigo
@@ -688,7 +688,7 @@ void controlaJogador(SUBMARINO *jogador, char *flag_fim){//funcao para mover jog
         }
     }//KBHIT
 }//funcao
-void inicializaJogador(SUBMARINO *jogador){
+void inicializaJogador(SUBMARINO *jogador){//inicializa as configuracoes do jogador
     (*jogador).posicao.X = INICIOXSUBMARINO;//coordenadas para inicializar o submarino
     (*jogador).posicao.Y = INICIOYSUBMARINO;
     (*jogador).orientacao = DIREITA;//o submarino e inicializado voltado para a direira
@@ -726,7 +726,7 @@ void gameLoop(FILE *jogo, SUBMARINO *jogador){//laco do jogo
         }
     }
 }
-void interfaceProcuraArquivo(){
+void interfaceProcuraArquivo(){//desenha a interface de procurar arquivo
     textcolor(LIGHTCYAN);
     cputsxy(25, 10, "*********************************");
     textcolor(YELLOW);
@@ -736,18 +736,18 @@ void interfaceProcuraArquivo(){
     textcolor(LIGHTCYAN);
     cputsxy(25, 16, "*********************************");
 }
-int procuraJogo(FILE **jogo){
-    char nomeArquivo[TAMSTRING];
-    gotoxy(35, 13);
-    scanf("%s", nomeArquivo);
-    *jogo = fopen(nomeArquivo, "rb");
-    if(*jogo == NULL){
+int procuraJogo(FILE **jogo){//faz a busca se o arquivo do jogo existe (passado como ponteiro duplo pois acessa o ponteiro do endereco da memoria do arquivo)
+    char nomeArquivo[TAMSTRING];//nome do arquivo a ser procurado deve terminar com .bin
+    gotoxy(35, 13);//indica a posicao para realizar o eco
+    scanf("%s", nomeArquivo);//le o nome do arquivo a ser procurado
+    *jogo = fopen(nomeArquivo, "rb");//atricui o arquivo aberto para jogo
+    if(*jogo == NULL){//verifica se nao teve sucesso na abertura
         return 1;
     }else{
         return 0;
     }
 }
-void abreJogo(FILE *jogo, SUBMARINO jogador){
+void abreJogo(FILE *jogo, SUBMARINO jogador){//faz a abertura do jogo caerregado
     if(fread(&jogador, sizeof(jogador), 1, jogo) == 1){
         clrscr();
         gameInterface();
@@ -922,7 +922,7 @@ void imprimeBordaMenu(){
     cputsxy(53, 11,"*****************");
 
 }
-void moveSeletor(char *select, int *posSX, int *posSY){
+void moveSeletor(char *select, int *posSX, int *posSY){//move o seletor do menu
     textcolor(LIGHTMAGENTA);
     putchxy(*posSX, *posSY, '>');
     *select = getch();
