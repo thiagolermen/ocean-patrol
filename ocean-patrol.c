@@ -43,7 +43,7 @@
 #define LIVRE 2//se o mergulhador esta livre na tela
 
 //JOGADOR
-#define TAMSTRING 10
+#define TAMSTRING 20//ttamanho do nome do jogador
 #define INICIOXSUBMARINO 5//valor de X do primeiro spawn do jogador
 #define INICIOYSUBMARINO 3//valor de Y do primeiro spawn do jogador
 #define DIREITA 1//orientacao do submarino
@@ -92,113 +92,41 @@ typedef struct missil{
 } TIRO;
 
 //void salvaJogador(){}
-//void salvaJogo(SUBMARINO jogador){}
-//void abreJogo(){}
-int procuraJogo(FILE *jogo){
+void interfaceSalvaJogo(){
+    textcolor(LIGHTCYAN);
+    cputsxy(25, 10, "*********************************");
+    textcolor(YELLOW);
+    cputsxy(25, 11, "            SALVAR JOGO            ");
+    textcolor(DARKGRAY);
+    cputsxy(25, 12, "          NOME DO JOGADOR       ");
+    textcolor(LIGHTCYAN);
+    cputsxy(25, 16, "*********************************");
+}
+void salvaJogo(FILE *jogo, SUBMARINO jogador){
+    int flagSalvaJogo = 0;
     char nomeArquivo[TAMSTRING];
-    gotoxy(30, 13);
-    scanf("%s", nomeArquivo);
-    jogo = fopen(nomeArquivo, "rb");
-    if(jogo == NULL){
-        return 1;
-    }else{
-        return 0;
-    }
-}
-void interfaceProcuraArquivo(){
-    textcolor(LIGHTCYAN);
-    cputsxy(25, 10, "*********************************");
-    textcolor(YELLOW);
-    cputsxy(25, 11, "           CARREGAR JOGO         ");
-    textcolor(DARKGRAY);
-    cputsxy(25, 12, "     DIGITE O NOME DO ARQUIVO       ");
-    textcolor(LIGHTCYAN);
-    cputsxy(25, 16, "*********************************");
-}
-void moveSeletorCarrega(char *select, int *posSX, int *posSY){
-    textcolor(YELLOW);
-    putchxy(*posSX, *posSY, '>');
-    *select = getch();
-    if(*select == TECLADOAUXILIAR){//verifica se usou as setas
-        *select = getch();
-        switch(*select){
-        case(CIMA)://CIMA
-            putchxy(*posSX, *posSY, '\0');
-            if(*posSY == 13){//verifica se esta no 'buscar um arquivo'
-                *posSY = 14;//volta para 'sair'
-                putchxy(*posSX, *posSY, '>');
-            }else{
-                (*posSY)--;
-                putchxy(*posSX, *posSY, '>');
-            }
-            break;
-        case(BAIXO)://BAIXO
-            putchxy(*posSX, *posSY, '\0');
-            if(*posSY == 14){//verifica se esta no 'sair'
-                *posSY = 13;//volta para 'buscar um arquivo'
-                putchxy(*posSX, *posSY, '>');
-            }else{
-                (*posSY)++;
-                putchxy(*posSX, *posSY, '>');
-            }//else
-        }//switch
-    }//if select
-}
-void interfaceCarregaJogo(){
-    textcolor(LIGHTCYAN);
-    cputsxy(25, 10, "*********************************");
-    textcolor(YELLOW);
-    cputsxy(25, 11, "           CARREGAR JOGO         ");
-    cputsxy(25, 12, "                                 ");
-    textcolor(DARKGRAY);
-    cputsxy(25, 13, "         BUSCAR UM ARQUIVO       ");
-    cputsxy(25, 14, "               SAIR              ");
-    textcolor(LIGHTCYAN);
-    cputsxy(25, 16, "*********************************");
-}
-void coloreLinhaCarrega(int posSY){
-    switch(posSY){//verifica em qual posicao o seletor esta
-    case(13)://resume game
-        textcolor(DARKGRAY);
-        cputsxy(25, 14, "               SAIR              ");
-        textcolor(YELLOW);
-        cputsxy(25, 13, "         BUSCAR UM ARQUIVO       ");
-        break;
-    case(14)://salvar e sair
-        textcolor(DARKGRAY);
-        cputsxy(25, 13, "         BUSCAR UM ARQUIVO       ");
-        textcolor(YELLOW);
-        cputsxy(25, 14, "               SAIR              ");
-    }
-}
-void carregaJogo(FILE *jogo){
-    int posSX = 25, posSY = 13;//posicao inicial do seletor. comeca em 'buscar um arquivo'
-    int ansCarrega = 0;//flag para fim do loop do 'carregaJogo'
-    char select;//guarda o valor do teclado para mover seletor
+    interfaceSalvaJogo();
     do{
-        interfaceCarregaJogo();
-        putchxy(posSX, posSY, '>');
-        coloreLinhaCarrega(posSY);
-        moveSeletorCarrega(&select, &posSX, &posSY);
-        if(select == ENTER){//verifica se o usuario apertou enter
-            switch(posSY){//verifica em qual posicao o seletor esta
-            case(13)://buscar um arquivo
-                clrscr();
-                interfaceProcuraArquivo();
-                if (procuraJogo(jogo) != 0){
-                    textcolor(LIGHTMAGENTA);
-                    cputsxy(28, 15, "ERRO NA ABERTURA DO ARQUIVO!");
-                }else{
-                    //abreJogo();
-                }
-                break;
-            case(14)://sair
-                clrscr();
-                ansCarrega = 1;
+        gotoxy(35, 13);
+        scanf("%s", nomeArquivo);
+        jogo = fopen(nomeArquivo, "wb");
+        if(jogo == NULL){
+            interfaceSalvaJogo();
+            cputsxy(28, 15, "ERRO NA ESCRITA!");
+            flagSalvaJogo = 1;
+        }else{
+            if(fwrite(&jogador, sizeof(jogador), 1, jogo) == 1){
+                fclose(jogo);
+                flagSalvaJogo = 0;
+            }else{
+                interfaceSalvaJogo();
+                cputsxy(28, 15, "ERRO NA ESCRITA!");
+                flagSalvaJogo = 1;
             }
         }
-    }while(ansCarrega != 1);
+    }while(flagSalvaJogo == 1);
 }
+
 void moveSeletorPause(char *select, int *posSX, int *posSY){
     textcolor(YELLOW);
     putchxy(*posSX, *posSY, '>');
@@ -265,7 +193,7 @@ void interfacePause(){
     textcolor(LIGHTCYAN);
     cputsxy(25, 16, "*********************************");
 }
-void pause(SUBMARINO *jogador){
+void pause(FILE *jogo, SUBMARINO *jogador){
     int posSX = 25, posSY = 13;//posicao inicial do seletor. comeca em 'resume game'
     int ansPause = 0;//flag para fim do loop do 'pause'
     char select;//guarda o valor do teclado para mover seletor
@@ -283,7 +211,7 @@ void pause(SUBMARINO *jogador){
                 break;
             case(14)://salvar e sair
                 clrscr();
-                //salvaJogo
+                salvaJogo(jogo, *jogador);
                 ansPause = 1;
                 break;
             case(15)://sair
@@ -769,7 +697,7 @@ void inicializaJogador(SUBMARINO *jogador){
     (*jogador).pontuacao = INICIOPONTUACAOJOGADOR;//o jogador inicia com 0 pontos
     (*jogador).oxigenio = INICIOOXIGENIOJOGADOR;//o jogador comeca com 30 pontos de oxigenio
 }
-void gameLoop(SUBMARINO *jogador){//laco do jogo
+void gameLoop(FILE *jogo, SUBMARINO *jogador){//laco do jogo
     char tecla;//flag para fim do jogo
     int flagGameLoop = 0;//flag para atualizar pontuacao
     int posO2X;//variavel da posicao inicial do OXIGENIO
@@ -791,12 +719,133 @@ void gameLoop(SUBMARINO *jogador){//laco do jogo
         testaColisao(jogador, obstaculo);
     }while(fimJogo(tecla, *jogador) != 1);//jogo roda enquanto o jogador nao teclou ESC ou zerou as vidas
     if (tecla == ESC){
-        pause(jogador);
+        pause(jogo, jogador);
     }else{
         if((*jogador).vidas == 0){
             //salvaJogador(jogador);
         }
     }
+}
+void interfaceProcuraArquivo(){
+    textcolor(LIGHTCYAN);
+    cputsxy(25, 10, "*********************************");
+    textcolor(YELLOW);
+    cputsxy(25, 11, "           CARREGAR JOGO         ");
+    textcolor(DARKGRAY);
+    cputsxy(25, 12, "     DIGITE O NOME DO ARQUIVO       ");
+    textcolor(LIGHTCYAN);
+    cputsxy(25, 16, "*********************************");
+}
+int procuraJogo(FILE **jogo){
+    char nomeArquivo[TAMSTRING];
+    gotoxy(35, 13);
+    scanf("%s", nomeArquivo);
+    *jogo = fopen(nomeArquivo, "rb");
+    if(*jogo == NULL){
+        return 1;
+    }else{
+        return 0;
+    }
+}
+void abreJogo(FILE *jogo, SUBMARINO jogador){
+    if(fread(&jogador, sizeof(jogador), 1, jogo) == 1){
+        clrscr();
+        gameInterface();
+        gameLoop(jogo, &jogador);
+        fclose(jogo);
+        clrscr();
+    }else{
+        interfaceProcuraArquivo();
+        textcolor(LIGHTMAGENTA);
+        cputsxy(28, 15, "ERRO NA ABERTURA DO ARQUIVO!");
+        procuraJogo(&jogo);
+    }
+}
+void interfaceCarregaJogo(){
+    textcolor(LIGHTCYAN);
+    cputsxy(25, 10, "*********************************");
+    textcolor(YELLOW);
+    cputsxy(25, 11, "           CARREGAR JOGO         ");
+    cputsxy(25, 12, "                                 ");
+    textcolor(DARKGRAY);
+    cputsxy(25, 13, "         BUSCAR UM ARQUIVO       ");
+    cputsxy(25, 14, "               SAIR              ");
+    textcolor(LIGHTCYAN);
+    cputsxy(25, 16, "*********************************");
+}
+void moveSeletorCarrega(char *select, int *posSX, int *posSY){
+    textcolor(YELLOW);
+    putchxy(*posSX, *posSY, '>');
+    *select = getch();
+    if(*select == TECLADOAUXILIAR){//verifica se usou as setas
+        *select = getch();
+        switch(*select){
+        case(CIMA)://CIMA
+            putchxy(*posSX, *posSY, '\0');
+            if(*posSY == 13){//verifica se esta no 'buscar um arquivo'
+                *posSY = 14;//volta para 'sair'
+                putchxy(*posSX, *posSY, '>');
+            }else{
+                (*posSY)--;
+                putchxy(*posSX, *posSY, '>');
+            }
+            break;
+        case(BAIXO)://BAIXO
+            putchxy(*posSX, *posSY, '\0');
+            if(*posSY == 14){//verifica se esta no 'sair'
+                *posSY = 13;//volta para 'buscar um arquivo'
+                putchxy(*posSX, *posSY, '>');
+            }else{
+                (*posSY)++;
+                putchxy(*posSX, *posSY, '>');
+            }//else
+        }//switch
+    }//if select
+}
+void coloreLinhaCarrega(int posSY){
+    switch(posSY){//verifica em qual posicao o seletor esta
+    case(13)://resume game
+        textcolor(DARKGRAY);
+        cputsxy(25, 14, "               SAIR              ");
+        textcolor(YELLOW);
+        cputsxy(25, 13, "         BUSCAR UM ARQUIVO       ");
+        break;
+    case(14)://salvar e sair
+        textcolor(DARKGRAY);
+        cputsxy(25, 13, "         BUSCAR UM ARQUIVO       ");
+        textcolor(YELLOW);
+        cputsxy(25, 14, "               SAIR              ");
+    }
+}
+void carregaJogo(FILE *jogo, SUBMARINO *jogador){
+    int posSX = 25, posSY = 13;//posicao inicial do seletor. comeca em 'buscar um arquivo'
+    int ansCarrega = 0;//flag para fim do loop do 'carregaJogo'
+    char select;//guarda o valor do teclado para mover seletor
+    do{
+        interfaceCarregaJogo();
+        putchxy(posSX, posSY, '>');
+        coloreLinhaCarrega(posSY);
+        moveSeletorCarrega(&select, &posSX, &posSY);
+        if(select == ENTER){//verifica se o usuario apertou enter
+            switch(posSY){//verifica em qual posicao o seletor esta
+            case(13)://buscar um arquivo
+                clrscr();
+                interfaceProcuraArquivo();
+                if (procuraJogo(&jogo) != 0){
+                    textcolor(LIGHTMAGENTA);
+                    cputsxy(28, 15, "ERRO NA ABERTURA DO ARQUIVO!");
+                }else{
+                    abreJogo(jogo, *jogador);
+                    fclose(jogo);
+                    ansCarrega = 1;
+                }
+                break;
+            case(14)://sair
+                clrscr();
+                ansCarrega = 1;
+            }
+        }
+    }while(ansCarrega != 1);
 }
 void interfaceMenu(){//desenha a interface do menu
     textcolor(LIGHTCYAN);
@@ -822,6 +871,7 @@ void interfaceMenu(){//desenha a interface do menu
     cputsxy(7, 21,"  .   |     ---------     |");
     cputsxy(7, 22,"    8-=\\_________________/");
 }
+
 int main(){
     menu();
     return 0;
@@ -844,13 +894,12 @@ void menu(){
                 clrscr();
                 gameInterface();
                 inicializaJogador(&jogador);
-                gameLoop(&jogador);
-                fclose(jogo);
+                gameLoop(jogo, &jogador);
                 clrscr();
                 break;
             case(7)://carregar jogo
                 clrscr();
-                carregaJogo(jogo);
+                carregaJogo(jogo, &jogador);
                 break;
             case(8)://recordes
                 clrscr();
