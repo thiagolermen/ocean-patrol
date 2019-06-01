@@ -67,8 +67,6 @@ void desenhaAgua();//desenha a agua
 
 /*=========    PRECISA:    =========*/
 //fazer funcoes de salvar jogo em texto
-//fazer funcoes de salvar jogo em .bin
-//fazer funcoes para abrir o jogo salvo
 
 typedef struct submarino{//estrutura do jogador
     COORD posicao;//COORD e uma estrutura com X e Y
@@ -193,33 +191,13 @@ void interfacePause(){
     textcolor(LIGHTCYAN);
     cputsxy(25, 16, "*********************************");
 }
-void pause(FILE *jogo, SUBMARINO *jogador){
-    int posSX = 25, posSY = 13;//posicao inicial do seletor. comeca em 'resume game'
-    int ansPause = 0;//flag para fim do loop do 'pause'
-    char select;//guarda o valor do teclado para mover seletor
-    clrscr();
-    do{
-        interfacePause();
-        putchxy(posSX, posSY, '>');
-        coloreLinhaPause(posSY);
-        moveSeletorPause(&select, &posSX, &posSY);
-        if(select == ENTER){//verifica se o usuario apertou enter
-            switch(posSY){//verifica em qual posicao o seletor esta
-            case(13)://resume game
-                clrscr();
-                //abreJogo();
-                break;
-            case(14)://salvar e sair
-                clrscr();
-                salvaJogo(jogo, *jogador);
-                ansPause = 1;
-                break;
-            case(15)://sair
-                clrscr();
-                ansPause = 1;
-            }
-        }
-    }while(ansPause != 1);
+void apagaOxigenio(int posO2X){
+    int i;
+    textbackground(0);
+    for(i=posO2X;i<48;i++){//constroi a barra de oxigenio
+        cputsxy(i, LINHA2 + 2, " ");
+
+    }
 }
 void desenhaTiro(TIRO missil){//imprime o tiro na posicao indicada
     textcolor(YELLOW);
@@ -379,8 +357,8 @@ void desenhaVidas(SUBMARINO jogador){
     }
 
 }
-int fimJogo(char tecla, SUBMARINO jogador){//verifica as possibilidades de gameOver ou fechar
-    if(tecla == ESC || jogador.vidas == 0 || jogador.oxigenio == 0)
+int fimJogo(int finalizaJogo, SUBMARINO jogador){//verifica as possibilidades de gameOver ou fechar
+    if(finalizaJogo == 1 || jogador.vidas == 0 || jogador.oxigenio == 0)
         return 1;
     else
         return 0;
@@ -697,18 +675,58 @@ void inicializaJogador(SUBMARINO *jogador){//inicializa as configuracoes do joga
     (*jogador).pontuacao = INICIOPONTUACAOJOGADOR;//o jogador inicia com 0 pontos
     (*jogador).oxigenio = INICIOOXIGENIOJOGADOR;//o jogador comeca com 30 pontos de oxigenio
 }
+void pause(FILE *jogo, SUBMARINO *jogador, int *finalizaJogo){
+    int posSX = 25, posSY = 13;//posicao inicial do seletor. comeca em 'resume game'
+    int ansPause = 0;//flag para fim do loop do 'pause'
+    char select;//guarda o valor do teclado para mover seletor
+    clrscr();
+    do{
+        interfacePause();
+        putchxy(posSX, posSY, '>');
+        coloreLinhaPause(posSY);
+        moveSeletorPause(&select, &posSX, &posSY);
+        if(select == ENTER){//verifica se o usuario apertou enter
+            switch(posSY){//verifica em qual posicao o seletor esta
+            case(13)://resume game
+                clrscr();
+                gameInterface();
+                desenhaSubmarino(*jogador);
+                desenhaVidas(*jogador);
+                atualizaMergulhadores(*jogador);
+                ansPause = 1;
+                break;
+            case(14)://salvar e sair
+                clrscr();
+                salvaJogo(jogo, *jogador);
+                *finalizaJogo = 1;
+                ansPause = 1;
+                break;
+            case(15)://sair
+                clrscr();
+                *finalizaJogo = 1;
+                ansPause = 1;
+            }
+        }
+    }while(ansPause != 1);
+}
 void gameLoop(FILE *jogo, SUBMARINO *jogador){//laco do jogo
     char tecla;//flag para fim do jogo
     int flagGameLoop = 0;//flag para atualizar pontuacao
-    int posO2X;//variavel da posicao inicial do OXIGENIO
+    int finalizaJogo = 0;//flag para finalizar o jogo
+    int posO2X = (*jogador).oxigenio + 11;//variavel da posicao inicial do OXIGENIO
     TIRO missil;//estrutura do tiro
     missil.estado = DESLIGADO;//estado do missil e inicializado como DESLIGADO para o jogador poder atirar
     OBSTACULO obstaculo[QTDOBSTACULOS];//estrutura do vetor de obstaculos
     desenhaSubmarino(*jogador);
     desenhaVidas(*jogador);
+    apagaOxigenio(posO2X);
     pontuacao(jogador);
     do{
         Sleep(25);//para deixar mais lento o jogo
+        if(tecla == ESC){
+            pause(jogo, jogador, &finalizaJogo);
+            apagaOxigenio(posO2X);
+        }
         loopPorSegundo(jogador,&flagGameLoop, &posO2X);//funcao para atualizar a pontuacao
         geraObstaculo(obstaculo);
         controlaJogador(jogador, &tecla);//chama attraves de ponteiro pos alterara os valores da posicao do submarino
@@ -717,15 +735,12 @@ void gameLoop(FILE *jogo, SUBMARINO *jogador){//laco do jogo
         moveObstaculo(obstaculo);
         testaColisaoTiro(jogador, &missil, obstaculo);
         testaColisao(jogador, obstaculo);
-    }while(fimJogo(tecla, *jogador) != 1);//jogo roda enquanto o jogador nao teclou ESC ou zerou as vidas
-    if (tecla == ESC){
-        pause(jogo, jogador);
-    }else{
-        if((*jogador).vidas == 0){
-            //salvaJogador(jogador);
-        }
+    }while(fimJogo(finalizaJogo, *jogador) != 1);//jogo roda enquanto o jogador nao teclou ESC ou zerou as vidas
+    if((*jogador).vidas == 0){
+        //salvaJogador(jogador);
     }
 }
+
 void interfaceProcuraArquivo(){//desenha a interface de procurar arquivo
     textcolor(LIGHTCYAN);
     cputsxy(25, 10, "*********************************");
@@ -751,6 +766,8 @@ void abreJogo(FILE *jogo, SUBMARINO jogador){//faz a abertura do jogo caerregado
     if(fread(&jogador, sizeof(jogador), 1, jogo) == 1){
         clrscr();
         gameInterface();
+        atualizaMergulhadores(jogador);
+
         gameLoop(jogo, &jogador);
         fclose(jogo);
         clrscr();
@@ -1033,5 +1050,3 @@ void desenhaAgua(){
     textcolor(LIGHTCYAN);
     cputsxy(XAGUA, YAGUA, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 }
-
-
