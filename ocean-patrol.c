@@ -28,6 +28,7 @@
 #define YAGUA 4//agua: coordenada Y onde a agua sera desenhada
 #define XAGUA 2//agua: coordenada X onde a agua sera desenhada
 #define INICIOXOXIGENIO 41//posicao inicial do oxigenio
+#define NUMRECORDES 10//numero de recordes que serao escritos no ranking
 
 //OBSTACULO
 #define NADA 0//para retirar o tipo do obstaculo para ele ser reinicializado
@@ -68,6 +69,9 @@ void desenhaAgua();//desenha a agua
 /*=========    PRECISA:    =========*/
 //fazer funcoes de salvar jogo em texto
 
+//verificar as novas funcoes de salvajogador, escreverecordes, etc
+//fazer a funcao para ordenar o ranking
+
 typedef struct submarino{//estrutura do jogador
     COORD posicao;//COORD e uma estrutura com X e Y
     char nome[TAMSTRING];
@@ -89,7 +93,113 @@ typedef struct missil{
     int estado;// booleano 0 ou 1
 } TIRO;
 
-//void salvaJogador(){}
+void ordenaRanking(char nome[TAMSTRING][NUMRECORDES], int pontuacao[NUMRECORDES]){
+    int i, j, k, aux;
+    char auxstring[TAMSTRING];
+    for (i = 0; i < NUMRECORDES - 1; i++){
+        k = i;
+        for (j = (i+1); j < NUMRECORDES; j++) {
+            if(pontuacao[j] > pontuacao[k]) {
+                k = j;
+            }
+        }
+        if (i != k) {
+            aux = pontuacao[i];
+            strcpy(auxstring, nome[i]);
+            pontuacao[i] = pontuacao[k];
+            strcpy(nome[i], nome[k]);
+            pontuacao[k] = aux;
+            strcpy(nome[k], auxstring);
+    }
+  }
+}
+void interfaceSalvaJogador(){
+    textcolor(LIGHTCYAN);
+    cputsxy(25, 10, "*********************************");
+    textcolor(YELLOW);
+    cputsxy(25, 11, "            FIM DE JOGO            ");
+    textcolor(DARKGRAY);
+    cputsxy(25, 12, "          NOME DO JOGADOR          ");
+    textcolor(LIGHTCYAN);
+    cputsxy(25, 16, "*********************************");
+}
+void salvaJogador(FILE *ranking, SUBMARINO *jogador){
+    int flagSalvaJogador = 0;
+    char nomeJogador[TAMSTRING];
+    char nomeArquivo[TAMSTRING] = {"ranking.txt"};
+    interfaceSalvaJogador();
+    do{
+        ranking = fopen(nomeArquivo, "a");
+        if(ranking == NULL){
+            interfaceSalvaJogador();
+            cputsxy(28, 15, "ERRO NA LEITURA!");
+            flagSalvaJogador = 1;
+            fclose(ranking);
+        }else{
+            gotoxy(35, 13);
+            scanf("%s", (*jogador).nome);
+            fprintf(ranking, "%s %d\n", (*jogador).nome, (*jogador).pontuacao);
+            fclose(ranking);
+            flagSalvaJogador = 1;
+        }
+    }while(flagSalvaJogador != 1);
+}
+void escreveRecordes(FILE *ranking){
+    char nomeArquivo[TAMSTRING] = {"ranking.txt"};
+    char nome[TAMSTRING][NUMRECORDES] = {};
+    int pontuacao[NUMRECORDES] = {};
+    int i = 0, j = 5;
+    ranking = fopen(nomeArquivo, "r");
+    if (ranking != NULL){
+        while(!feof(ranking)){
+            fscanf(ranking, "%s", nome[i]);
+            fscanf(ranking, "%d", &pontuacao[i]);
+            i++;
+        }
+    }
+    ordenaRanking(nome, pontuacao);
+    for(i=0;i<NUMRECORDES;i++){
+        cputsxy(29, j, nome[i]);
+        gotoxy(48, j);
+        printf("%d", pontuacao[i]);
+        j+=2;
+    }
+    fclose(ranking);
+}
+void interfaceRecordes(){
+    char cell = '*';
+    int i, j = 1;
+    textcolor(YELLOW);
+    cputsxy(36, 2, "RECORDES");
+    cputsxy(30, 4, "NOME");
+    cputsxy(45, 4, "PONTUACAO");
+    textcolor(LIGHTCYAN);
+    for (i=2;i<25;i++){//constroi os limites vericais do ranking
+            putchxy (20, i, cell);
+            putchxy (60, i, cell);
+    }
+    for (i=20;i<61;i++){//constroi os limites horizontais do ranking
+            putchxy (i, 1, cell);
+            putchxy (i, 3, cell);
+            putchxy (i, 24, cell);
+    }
+    textcolor(DARKGRAY);
+    for(i=5;i<24;i+=2){
+        gotoxy(22, i);
+        printf("%d.", j);
+        j++;
+    }
+}
+void recordes(FILE *ranking){
+    char tecla;
+    interfaceRecordes();
+    escreveRecordes(ranking);
+    do{
+        if(kbhit()){
+            tecla = getch();
+        }
+    }while(tecla != ESC);
+}
 void interfaceSalvaJogo(){//desenha a interface do salvaJogo
     textcolor(LIGHTCYAN);
     cputsxy(25, 10, "*********************************");
@@ -709,7 +819,7 @@ void pause(FILE *jogo, SUBMARINO *jogador, int *finalizaJogo){
         }
     }while(ansPause != 1);
 }
-void gameLoop(FILE *jogo, SUBMARINO *jogador){//laco do jogo
+void gameLoop(FILE *jogo, FILE *ranking, SUBMARINO *jogador){//laco do jogo
     char tecla;//flag para fim do jogo
     int flagGameLoop = 0;//flag para atualizar pontuacao
     int finalizaJogo = 0;//flag para finalizar o jogo
@@ -737,7 +847,7 @@ void gameLoop(FILE *jogo, SUBMARINO *jogador){//laco do jogo
         testaColisao(jogador, obstaculo);
     }while(fimJogo(finalizaJogo, *jogador) != 1);//jogo roda enquanto o jogador nao teclou ESC ou zerou as vidas
     if((*jogador).vidas == 0){
-        //salvaJogador(jogador);
+        salvaJogador(ranking, jogador);
     }
 }
 
@@ -762,13 +872,13 @@ int procuraJogo(FILE **jogo){//faz a busca se o arquivo do jogo existe (passado 
         return 0;
     }
 }
-void abreJogo(FILE *jogo, SUBMARINO jogador){//faz a abertura do jogo caerregado
+void abreJogo(FILE *jogo, FILE *ranking, SUBMARINO jogador){//faz a abertura do jogo caerregado
     if(fread(&jogador, sizeof(jogador), 1, jogo) == 1){
         clrscr();
         gameInterface();
         atualizaMergulhadores(jogador);
 
-        gameLoop(jogo, &jogador);
+        gameLoop(jogo, ranking, &jogador);
         fclose(jogo);
         clrscr();
     }else{
@@ -834,7 +944,7 @@ void coloreLinhaCarrega(int posSY){
         cputsxy(25, 14, "               SAIR              ");
     }
 }
-void carregaJogo(FILE *jogo, SUBMARINO *jogador){
+void carregaJogo(FILE *jogo, FILE *ranking, SUBMARINO *jogador){
     int posSX = 25, posSY = 13;//posicao inicial do seletor. comeca em 'buscar um arquivo'
     int ansCarrega = 0;//flag para fim do loop do 'carregaJogo'
     char select;//guarda o valor do teclado para mover seletor
@@ -852,7 +962,7 @@ void carregaJogo(FILE *jogo, SUBMARINO *jogador){
                     textcolor(LIGHTMAGENTA);
                     cputsxy(28, 15, "ERRO NA ABERTURA DO ARQUIVO!");
                 }else{
-                    abreJogo(jogo, *jogador);
+                    abreJogo(jogo, ranking, *jogador);
                     fclose(jogo);
                     ansCarrega = 1;
                 }
@@ -899,6 +1009,7 @@ void menu(){
     int ansMenu;//flag para fim do loop do 'menu'
     SUBMARINO jogador;
     FILE *jogo;
+    FILE *ranking;
     do{
         interfaceMenu();
         imprimeBordaMenu();
@@ -911,14 +1022,16 @@ void menu(){
                 clrscr();
                 gameInterface();
                 inicializaJogador(&jogador);
-                gameLoop(jogo, &jogador);
+                gameLoop(jogo, ranking, &jogador);
                 clrscr();
                 break;
             case(7)://carregar jogo
                 clrscr();
-                carregaJogo(jogo, &jogador);
+                carregaJogo(jogo, ranking, &jogador);
                 break;
             case(8)://recordes
+                clrscr();
+                recordes(ranking);
                 clrscr();
                 break;
             case(9)://creditos
