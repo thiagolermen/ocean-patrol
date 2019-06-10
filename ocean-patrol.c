@@ -45,7 +45,8 @@
 
 //JOGADOR
 #define TAMSTRING 20//ttamanho do nome do jogador
-#define INICIOXSUBMARINO 5//valor de X do primeiro spawn do jogador
+#define MAXARQ 50//capacidade maxima de nomes salvos no arquivo
+#define INICIOXSUBMARINO 32//valor de X do primeiro spawn do jogador
 #define INICIOYSUBMARINO 3//valor de Y do primeiro spawn do jogador
 #define DIREITA 1//orientacao do submarino
 #define ESQUERDA 0//oriantacao do submarino
@@ -67,10 +68,9 @@ void gameInterface();//imprime a interface
 void desenhaAgua();//desenha a agua
 
 /*=========    PRECISA:    =========*/
-//fazer funcoes de salvar jogo em texto
+//fazer funcao para excluir ordenar ranking no arquivo texto
+//ajustar bug de spawn na tela dos obstaculos em posicoes correntes
 
-//verificar as novas funcoes de salvajogador, escreverecordes, etc
-//fazer a funcao para ordenar o ranking
 
 typedef struct submarino{//estrutura do jogador
     COORD posicao;//COORD e uma estrutura com X e Y
@@ -93,18 +93,18 @@ typedef struct missil{
     int estado;// booleano 0 ou 1
 } TIRO;
 
-void ordenaRanking(char nome[TAMSTRING][NUMRECORDES], int pontuacao[NUMRECORDES]){
+void ordenaRanking(char nome[][TAMSTRING], int pontuacao[], int numeroRecordes){//ordena o ranking
     int i, j, k, aux;
-    char auxstring[TAMSTRING];
-    for (i = 0; i < NUMRECORDES - 1; i++){
-        k = i;
-        for (j = (i+1); j < NUMRECORDES; j++) {
-            if(pontuacao[j] > pontuacao[k]) {
+    char auxstring[TAMSTRING];//auxiliar para guardar a string
+    for (i = 0; i < numeroRecordes - 1; i++){//selection sort
+        k = i;//variavel para varreer os indeices
+        for (j = (i+1); j < numeroRecordes; j++) {
+            if(pontuacao[j] > pontuacao[k]){//verifica se a pontuacao do jogador e
                 k = j;
             }
         }
-        if (i != k) {
-            aux = pontuacao[i];
+        if (i != k) {//verifica se nao e o mesmo elemtno
+            aux = pontuacao[i];//auxiliar para fazer a troca entre as posicoes
             strcpy(auxstring, nome[i]);
             pontuacao[i] = pontuacao[k];
             strcpy(nome[i], nome[k]);
@@ -113,7 +113,7 @@ void ordenaRanking(char nome[TAMSTRING][NUMRECORDES], int pontuacao[NUMRECORDES]
     }
   }
 }
-void interfaceSalvaJogador(){
+void interfaceSalvaJogador(){//desenha a interface do salva jogador
     textcolor(LIGHTCYAN);
     cputsxy(25, 10, "*********************************");
     textcolor(YELLOW);
@@ -129,39 +129,41 @@ void salvaJogador(FILE *ranking, SUBMARINO *jogador){
     char nomeArquivo[TAMSTRING] = {"ranking.txt"};
     interfaceSalvaJogador();
     do{
-        ranking = fopen(nomeArquivo, "a");
-        if(ranking == NULL){
+        ranking = fopen(nomeArquivo, "a");//arquivo aberto para append
+        if(ranking == NULL){//verifica se o arquivo foi aberto corretamente
             interfaceSalvaJogador();
             cputsxy(28, 15, "ERRO NA LEITURA!");
             flagSalvaJogador = 1;
             fclose(ranking);
         }else{
             gotoxy(35, 13);
-            scanf("%s", (*jogador).nome);
-            fprintf(ranking, "%s %d\n", (*jogador).nome, (*jogador).pontuacao);
+            scanf("%s", (*jogador).nome);//le o nome do jogador
+            fprintf(ranking, "%s %d\n", (*jogador).nome, (*jogador).pontuacao);//printa o nome do jogador com a sua pontuacao no arquivo txt
             fclose(ranking);
             flagSalvaJogador = 1;
         }
     }while(flagSalvaJogador != 1);
 }
-void escreveRecordes(FILE *ranking){
+void escreveRecordes(FILE *ranking){//escreve os recordes no arquivo
     char nomeArquivo[TAMSTRING] = {"ranking.txt"};
-    char nome[TAMSTRING][NUMRECORDES] = {};
-    int pontuacao[NUMRECORDES] = {};
+    char nome[MAXARQ][TAMSTRING] = {};
+    int pontuacao[MAXARQ] = {};
     int i = 0, j = 5;
-    ranking = fopen(nomeArquivo, "r");
+    int numeroRecordes = 0;
+    ranking = fopen(nomeArquivo, "r");//abre o arquivo para a leitura
     if (ranking != NULL){
         while(!feof(ranking)){
-            fscanf(ranking, "%s", nome[i]);
-            fscanf(ranking, "%d", &pontuacao[i]);
+            numeroRecordes++;
+            fscanf(ranking, "%s", nome[i]);//escreve o nome do jogador no arquivo
+            fscanf(ranking, "%d", &pontuacao[i]);//escreve a pontuacao do jogador no arquivo
             i++;
         }
     }
-    ordenaRanking(nome, pontuacao);
+    ordenaRanking(nome, pontuacao, numeroRecordes);
     for(i=0;i<NUMRECORDES;i++){
-        cputsxy(29, j, nome[i]);
+        cputsxy(29, j, nome[i]);//desenha o nome do jogador na tela recordes
         gotoxy(48, j);
-        printf("%d", pontuacao[i]);
+        printf("%d", pontuacao[i]);//desenha a pontuacao do jogadorna tela
         j+=2;
     }
     fclose(ranking);
@@ -190,7 +192,7 @@ void interfaceRecordes(){
         j++;
     }
 }
-void recordes(FILE *ranking){
+void recordes(FILE *ranking){//imprime a funcao de rocordes no menu
     char tecla;
     interfaceRecordes();
     escreveRecordes(ranking);
@@ -216,14 +218,14 @@ void salvaJogo(FILE *jogo, SUBMARINO jogador){//salvo o jogo
     interfaceSalvaJogo();
     do{
         gotoxy(35, 13);
-        scanf("%s", nomeArquivo);
-        jogo = fopen(nomeArquivo, "wb");
-        if(jogo == NULL){
+        scanf("%s", nomeArquivo);//ne o onme do arquivo
+        jogo = fopen(nomeArquivo, "wb");//abre arquivo para poder ser alterado
+        if(jogo == NULL){//verifica se o arquivo nao abriu
             interfaceSalvaJogo();
             cputsxy(28, 15, "ERRO NA ESCRITA!");
             flagSalvaJogo = 1;
         }else{
-            if(fwrite(&jogador, sizeof(jogador), 1, jogo) == 1){
+            if(fwrite(&jogador, sizeof(jogador), 1, jogo) == 1){//verifica se o arquivo pode ser escrito e salva as definicoes no aruqivo
                 fclose(jogo);
                 flagSalvaJogo = 0;
             }else{
@@ -371,16 +373,24 @@ void tiroJogador (char tecla, SUBMARINO jogador, TIRO *missil){//inicializa as c
 void atualizaMergulhadores(SUBMARINO jogador){//desenha os jogadores capturados na tela
     textcolor(LIGHTGREEN);
     if(jogador.mergulhadores == 0){//se o jogador nao capturou nenhum mergulhador
-        cputsxy(63, LINHA2 + 2, "              ");
+        cputsxy(62, LINHA2 + 2, "                  ");
     }else{
         if(jogador.mergulhadores == 1){
-            cputsxy(63, LINHA2 + 2, "\\o/          ");//se o jogador capturou um mergulhador
+            cputsxy(62, LINHA2 + 2, "\\o/              ");//se o jogador capturou um mergulhador
         }else{
             if(jogador.mergulhadores == 2){
-                cputsxy(63, LINHA2 + 2, "\\o/ \\o/     ");//se o jogador capturou dois mergulhadores
+                cputsxy(62, LINHA2 + 2, "\\o/\\o/          ");//se o jogador capturou dois mergulhadores
             }else{
                 if(jogador.mergulhadores == 3){
-                    cputsxy(63, LINHA2 + 2, "\\o/ \\o/ \\o/");//se o jogador capturou tres mergulhadores
+                    cputsxy(62, LINHA2 + 2, "\\o/\\o/\\o/      ");//se o jogador capturou tres mergulhadores
+                }else{
+                    if(jogador.mergulhadores == 4){
+                        cputsxy(62, LINHA2 + 2, "\\o/\\o/\\o/\\o/    ");
+                    }else{
+                        if(jogador.mergulhadores == 5){
+                            cputsxy(62, LINHA2 + 2, "\\o/\\o/\\o/\\o/\\o/");
+                        }
+                    }
                 }
             }
         }
@@ -666,7 +676,7 @@ void testaColisao(SUBMARINO *jogador, OBSTACULO obstaculo[]){//verifica se houve
                    ((*jogador).posicao.Y < obstaculo[i].posicao.Y + 1) &&//verifica se Y2(obstaculo) esta entre Y1(submarino) + ALTURASUBMARINO
                    ((*jogador).posicao.Y + ALTURASUBMARINO > obstaculo[i].posicao.Y)){//verifica se Y1(submarino) esta entre Y2(mergulhador)
                     //houve colisao
-                    if((*jogador).mergulhadores < 3){
+                    if((*jogador).mergulhadores < 5){
                         apagaObstaculo(obstaculo, i);//o mergulhador e capturado
                         obstaculo[i].posicao.X = LINHA2+2;//a posicao onde o mergulhador e guardado
                         apagaObstaculo(obstaculo, i);
@@ -694,7 +704,6 @@ void testaColisaoTiro(SUBMARINO *jogador,TIRO *missil, OBSTACULO obstaculo[]){//
                 pontuacao(jogador);
                 (*missil).estado = DESLIGADO;//o estado do tiro e setado para DESLIGADO para o jogador poder dar outro tiro
                 apagaTiro(*missil);
-                apagaObstaculo(obstaculo, i);
                 apagaObstaculo(obstaculo, i);
                 obstaculo[i].tipo = NADA;//tipo do obstaculo e setado para NADA para poder ser reespawnado
             }
@@ -1150,7 +1159,7 @@ void gameInterface(){
     }
     textcolor(LIGHTMAGENTA);
     cputsxy(1, LINHA2 + 2, "Oxigenio ");
-    cputsxy(48, LINHA2 + 2, "Mergulhadores");
+    cputsxy(49, LINHA2 + 2, "Mergulhadores");
     textbackground(YELLOW);
     textcolor(YELLOW);
     for(i=10;i<INICIOXOXIGENIO;i ++){//constroi a barra de oxigenio
