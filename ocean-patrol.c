@@ -45,7 +45,7 @@
 
 //JOGADOR
 #define TAMSTRING 20//ttamanho do nome do jogador
-#define MAXARQ 50//capacidade maxima de nomes salvos no arquivo
+#define MAXARQ 10//capacidade maxima de nomes salvos no arquivo
 #define INICIOXSUBMARINO 32//valor de X do primeiro spawn do jogador
 #define INICIOYSUBMARINO 3//valor de Y do primeiro spawn do jogador
 #define DIREITA 1//orientacao do submarino
@@ -93,12 +93,65 @@ typedef struct missil{
     int estado;// booleano 0 ou 1
 } TIRO;
 
-void ordenaRanking(char nome[][TAMSTRING], int pontuacao[], int numeroRecordes){//ordena o ranking
+void interfaceCreditos(){
+    textcolor(LIGHTCYAN);
+    cputsxy(15, 3, "*****************************************************");
+    textcolor(YELLOW);
+    cputsxy(15, 4, "                     OCEAN PATROL                    ");
+    cputsxy(15, 6, "                      CREDITOS                       ");
+    textcolor(LIGHTCYAN);
+    cputsxy(15, 7, "*****************************************************");
+    textcolor(DARKGRAY);
+    cputsxy(15, 12, "               LEONARDO BARROS BILHALVA              ");
+    cputsxy(15, 13, "                THIAGO SOTORIVA LERMEN               ");
+    textcolor(YELLOW);
+    cputsxy(15, 19, "          INF1202 - ALGORITMOS E PROGRAMACAO         ");
+    textcolor(DARKGRAY);
+    cputsxy(15, 21, "                PROFESSORA MARA ABEL                 ");
+    cputsxy(15, 22, "             MONITOR CAUA ROCA ANTUNES               ");
+    textcolor(LIGHTCYAN);
+    cputsxy(15, 23, "*****************************************************");
+}
+void creditos(){
+    char tecla;
+    interfaceCreditos();
+    do{
+        if(kbhit()){
+            tecla = getch();
+        }
+    }while(tecla != ESC);
+    clrscr();
+}
+void interfaceSalvaJogador(){//desenha a interface do salva jogador
+    textcolor(LIGHTCYAN);
+    cputsxy(25, 10, "*********************************");
+    textcolor(YELLOW);
+    cputsxy(25, 11, "            FIM DE JOGO            ");
+    textcolor(DARKGRAY);
+    cputsxy(25, 12, "          NOME DO JOGADOR          ");
+    textcolor(LIGHTCYAN);
+    cputsxy(25, 16, "*********************************");
+}
+void gravaArquivo(FILE *ranking, char nome[][TAMSTRING], int pontuacao[], char nomeArquivo[TAMSTRING], int numJogadores){
+    int i;
+    ranking = fopen(nomeArquivo, "w");
+    if(ranking == NULL){//verifica se o arquivo foi aberto corretamente
+        interfaceSalvaJogador();
+        cputsxy(28, 15, "ERRO NA LEITURA!");
+        fclose(ranking);
+    }else{
+        for(i=0;i<numJogadores;i++){
+            fprintf(ranking,"%s %d \n", nome[i], pontuacao[i]);
+        }
+        fclose(ranking);
+    }
+}
+void ordenaRanking(char nome[][TAMSTRING], int pontuacao[], SUBMARINO *jogador, FILE *ranking, int numJogadores){//ordena o ranking
     int i, j, k, aux;
     char auxstring[TAMSTRING];//auxiliar para guardar a string
-    for (i = 0; i < numeroRecordes - 1; i++){//selection sort
+    for (i = 0; i < numJogadores - 1; i++){//selection sort
         k = i;//variavel para varreer os indeices
-        for (j = (i+1); j < numeroRecordes; j++) {
+        for (j = (i+1); j < numJogadores; j++) {
             if(pontuacao[j] > pontuacao[k]){//verifica se a pontuacao do jogador e
                 k = j;
             }
@@ -113,19 +166,30 @@ void ordenaRanking(char nome[][TAMSTRING], int pontuacao[], int numeroRecordes){
     }
   }
 }
-void interfaceSalvaJogador(){//desenha a interface do salva jogador
-    textcolor(LIGHTCYAN);
-    cputsxy(25, 10, "*********************************");
-    textcolor(YELLOW);
-    cputsxy(25, 11, "            FIM DE JOGO            ");
-    textcolor(DARKGRAY);
-    cputsxy(25, 12, "          NOME DO JOGADOR          ");
-    textcolor(LIGHTCYAN);
-    cputsxy(25, 16, "*********************************");
+void gravaPontuacao(FILE *ranking, SUBMARINO *jogador, char nomeArquivo[]){
+    int i = 0;
+    int pontuacao[MAXARQ];
+    int numJogadores = 0;
+    char nome[MAXARQ][TAMSTRING];
+    ranking = fopen(nomeArquivo, "r");
+    if(ranking == NULL){//verifica se o arquivo foi aberto corretamente
+        interfaceSalvaJogador();
+        cputsxy(28, 15, "ERRO NA LEITURA!");
+        fclose(ranking);
+    }else{
+        while(!feof(ranking)){
+            fscanf(ranking, "%s", nome[i]);//escreve o nome do jogador no arquivo
+            fscanf(ranking, "%d", &pontuacao[i]);//escreve a pontuacao do jogador no arquivo
+            numJogadores++;
+            i++;
+        }
+        fclose(ranking);
+        ordenaRanking(nome, pontuacao, jogador, ranking, numJogadores-1);
+        gravaArquivo(ranking, nome, pontuacao, nomeArquivo, numJogadores-1);
+    }
 }
 void salvaJogador(FILE *ranking, SUBMARINO *jogador){
     int flagSalvaJogador = 0;
-    char nomeJogador[TAMSTRING];
     char nomeArquivo[TAMSTRING] = {"ranking.txt"};
     interfaceSalvaJogador();
     do{
@@ -138,8 +202,10 @@ void salvaJogador(FILE *ranking, SUBMARINO *jogador){
         }else{
             gotoxy(35, 13);
             scanf("%s", (*jogador).nome);//le o nome do jogador
-            fprintf(ranking, "%s %d\n", (*jogador).nome, (*jogador).pontuacao);//printa o nome do jogador com a sua pontuacao no arquivo txt
+            fprintf(ranking, "%s %d \n", (*jogador).nome, (*jogador).pontuacao);
+            fflush(ranking);
             fclose(ranking);
+            gravaPontuacao(ranking, jogador, nomeArquivo);
             flagSalvaJogador = 1;
         }
     }while(flagSalvaJogador != 1);
@@ -159,12 +225,13 @@ void escreveRecordes(FILE *ranking){//escreve os recordes no arquivo
             i++;
         }
     }
-    ordenaRanking(nome, pontuacao, numeroRecordes);
     for(i=0;i<NUMRECORDES;i++){
-        cputsxy(29, j, nome[i]);//desenha o nome do jogador na tela recordes
-        gotoxy(48, j);
-        printf("%d", pontuacao[i]);//desenha a pontuacao do jogadorna tela
-        j+=2;
+        if(pontuacao[i] != 0 && nome[i]){
+            cputsxy(29, j, nome[i]);//desenha o nome do jogador na tela recordes
+            gotoxy(48, j);
+            printf("%d", pontuacao[i]);//desenha a pontuacao do jogadorna tela
+            j+=2;
+        }
     }
     fclose(ranking);
 }
@@ -563,8 +630,8 @@ void moveObstaculo(OBSTACULO obstaculo[]){//move os obstaculos
                     obstaculo[i].posicao.X--;
                     apagaObstaculo(obstaculo, i);
                     obstaculo[i].tipo = -1;
-                }
-                desenhaObstaculo(obstaculo, i);
+                }else
+                    desenhaObstaculo(obstaculo, i);
             }else{
                 if(obstaculo[i].orientacao == ESQUERDA){
                     obstaculo[i].posicao.X--;
@@ -572,8 +639,8 @@ void moveObstaculo(OBSTACULO obstaculo[]){//move os obstaculos
                         obstaculo[i].posicao.X++;
                         apagaObstaculo(obstaculo, i);
                         obstaculo[i].tipo = -1;
-                    }
-                    desenhaObstaculo(obstaculo, i);
+                    }else
+                        desenhaObstaculo(obstaculo, i);
             }
         }
     }else{
@@ -585,8 +652,8 @@ void moveObstaculo(OBSTACULO obstaculo[]){//move os obstaculos
                         obstaculo[i].posicao.X--;
                         apagaObstaculo(obstaculo, i);
                         obstaculo[i].tipo = -1;
-                    }
-                    desenhaObstaculo(obstaculo, i);
+                    }else
+                        desenhaObstaculo(obstaculo, i);
                 }else{
                     if(obstaculo[i].orientacao == ESQUERDA){
                         obstaculo[i].posicao.X--;
@@ -594,8 +661,8 @@ void moveObstaculo(OBSTACULO obstaculo[]){//move os obstaculos
                             obstaculo[i].posicao.X++;
                             apagaObstaculo(obstaculo, i);
                             obstaculo[i].tipo = -1;
-                        }
-                        desenhaObstaculo(obstaculo, i);
+                        }else
+                            desenhaObstaculo(obstaculo, i);
                     }
                 }
             }
@@ -694,7 +761,7 @@ void testaColisao(SUBMARINO *jogador, OBSTACULO obstaculo[]){//verifica se houve
 void testaColisaoTiro(SUBMARINO *jogador,TIRO *missil, OBSTACULO obstaculo[]){//testa se o tiro colidiu com algum obstaculo
     int i;
     for(i=0;i<QTDOBSTACULOS;i++){
-        if(obstaculo[i].tipo == INIMIGO){//verifica se o obstaculo e um inimigo
+        if(obstaculo[i].tipo == INIMIGO && (*missil).estado == LIGADO){//verifica se o obstaculo e um inimigo
             if(((*missil).posicao.X < obstaculo[i].posicao.X + LARGURASUBINIMIGO - 1) &&//verifica se X2(obstaculo) esta entre X1(submarino) + LARGURASUBMARINO
                ((*missil).posicao.X > obstaculo[i].posicao.X) &&//verifica se o X1(submarino) esta entre o X2(obstaculo)
                ((*missil).posicao.Y < obstaculo[i].posicao.Y + ALTURASUBINIMIGO) &&//verifica se Y2(obstaculo) esta entre Y1(submarino) + ALTURASUBMARINO
@@ -829,7 +896,7 @@ void pause(FILE *jogo, SUBMARINO *jogador, int *finalizaJogo){
     }while(ansPause != 1);
 }
 void gameLoop(FILE *jogo, FILE *ranking, SUBMARINO *jogador){//laco do jogo
-    char tecla;//flag para fim do jogo
+    char tecla = 0;//flag para fim do jogo
     int flagGameLoop = 0;//flag para atualizar pontuacao
     int finalizaJogo = 0;//flag para finalizar o jogo
     int posO2X = (*jogador).oxigenio + 11;//variavel da posicao inicial do OXIGENIO
@@ -1045,6 +1112,7 @@ void menu(){
                 break;
             case(9)://creditos
                 clrscr();
+                creditos();
                 break;
             case(10)://sair
                 clrscr();
