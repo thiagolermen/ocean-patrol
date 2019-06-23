@@ -45,7 +45,8 @@
 
 //JOGADOR
 #define TAMSTRING 20//ttamanho do nome do jogador
-#define MAXARQ 10//capacidade maxima de nomes salvos no arquivo
+#define MAXARQ 11//capacidade maxima de nomes salvos no arquivo
+#define MAXBUFF 40//capacidade maxima para transferir dados armazenados em buffer
 #define INICIOXSUBMARINO 32//valor de X do primeiro spawn do jogador
 #define INICIOYSUBMARINO 3//valor de Y do primeiro spawn do jogador
 #define DIREITA 1//orientacao do submarino
@@ -132,109 +133,6 @@ void interfaceSalvaJogador(){//desenha a interface do salva jogador
     textcolor(LIGHTCYAN);
     cputsxy(25, 16, "*********************************");
 }
-void gravaArquivo(FILE *ranking, char nome[][TAMSTRING], int pontuacao[], char nomeArquivo[TAMSTRING], int numJogadores){
-    int i;
-    ranking = fopen(nomeArquivo, "w");
-    if(ranking == NULL){//verifica se o arquivo foi aberto corretamente
-        interfaceSalvaJogador();
-        cputsxy(28, 15, "ERRO NA LEITURA!");
-        fclose(ranking);
-    }else{
-        for(i=0;i<numJogadores;i++){
-            fprintf(ranking,"%s %d \n", nome[i], pontuacao[i]);
-        }
-        fclose(ranking);
-    }
-}
-void ordenaRanking(char nome[][TAMSTRING], int pontuacao[], SUBMARINO *jogador, FILE *ranking, int numJogadores){//ordena o ranking
-    int i, j, k, aux;
-    char auxstring[TAMSTRING];//auxiliar para guardar a string
-    for (i = 0; i < numJogadores - 1; i++){//selection sort
-        k = i;//variavel para varreer os indeices
-        for (j = (i+1); j < numJogadores; j++) {
-            if(pontuacao[j] > pontuacao[k]){//verifica se a pontuacao do jogador e
-                k = j;
-            }
-        }
-        if (i != k) {//verifica se nao e o mesmo elemtno
-            aux = pontuacao[i];//auxiliar para fazer a troca entre as posicoes
-            strcpy(auxstring, nome[i]);
-            pontuacao[i] = pontuacao[k];
-            strcpy(nome[i], nome[k]);
-            pontuacao[k] = aux;
-            strcpy(nome[k], auxstring);
-    }
-  }
-}
-void gravaPontuacao(FILE *ranking, SUBMARINO *jogador, char nomeArquivo[]){
-    int i = 0;
-    int pontuacao[MAXARQ];
-    int numJogadores = 0;
-    char nome[MAXARQ][TAMSTRING];
-    ranking = fopen(nomeArquivo, "r");
-    if(ranking == NULL){//verifica se o arquivo foi aberto corretamente
-        interfaceSalvaJogador();
-        cputsxy(28, 15, "ERRO NA LEITURA!");
-        fclose(ranking);
-    }else{
-        while(!feof(ranking)){
-            fscanf(ranking, "%s", nome[i]);//escreve o nome do jogador no arquivo
-            fscanf(ranking, "%d", &pontuacao[i]);//escreve a pontuacao do jogador no arquivo
-            numJogadores++;
-            i++;
-        }
-        fclose(ranking);
-        ordenaRanking(nome, pontuacao, jogador, ranking, numJogadores-1);
-        gravaArquivo(ranking, nome, pontuacao, nomeArquivo, numJogadores-1);
-    }
-}
-void salvaJogador(FILE *ranking, SUBMARINO *jogador){
-    int flagSalvaJogador = 0;
-    char nomeArquivo[TAMSTRING] = {"ranking.txt"};
-    interfaceSalvaJogador();
-    do{
-        ranking = fopen(nomeArquivo, "a");//arquivo aberto para append
-        if(ranking == NULL){//verifica se o arquivo foi aberto corretamente
-            interfaceSalvaJogador();
-            cputsxy(28, 15, "ERRO NA LEITURA!");
-            flagSalvaJogador = 1;
-            fclose(ranking);
-        }else{
-            gotoxy(35, 13);
-            scanf("%s", (*jogador).nome);//le o nome do jogador
-            fprintf(ranking, "%s %d \n", (*jogador).nome, (*jogador).pontuacao);
-            fflush(ranking);
-            fclose(ranking);
-            gravaPontuacao(ranking, jogador, nomeArquivo);
-            flagSalvaJogador = 1;
-        }
-    }while(flagSalvaJogador != 1);
-}
-void escreveRecordes(FILE *ranking){//escreve os recordes no arquivo
-    char nomeArquivo[TAMSTRING] = {"ranking.txt"};
-    char nome[MAXARQ][TAMSTRING] = {};
-    int pontuacao[MAXARQ] = {};
-    int i = 0, j = 5;
-    int numeroRecordes = 0;
-    ranking = fopen(nomeArquivo, "r");//abre o arquivo para a leitura
-    if (ranking != NULL){
-        while(!feof(ranking)){
-            numeroRecordes++;
-            fscanf(ranking, "%s", nome[i]);//escreve o nome do jogador no arquivo
-            fscanf(ranking, "%d", &pontuacao[i]);//escreve a pontuacao do jogador no arquivo
-            i++;
-        }
-    }
-    for(i=0;i<NUMRECORDES;i++){
-        if(pontuacao[i] != 0 && nome[i]){
-            cputsxy(29, j, nome[i]);//desenha o nome do jogador na tela recordes
-            gotoxy(48, j);
-            printf("%d", pontuacao[i]);//desenha a pontuacao do jogadorna tela
-            j+=2;
-        }
-    }
-    fclose(ranking);
-}
 void interfaceRecordes(){
     char cell = '*';
     int i, j = 1;
@@ -259,16 +157,185 @@ void interfaceRecordes(){
         j++;
     }
 }
+
+
+void salvaRankingOrdenado(FILE *ranking, char nome[][TAMSTRING], int pontuacao[], int numJogadores){
+    int i;
+    ranking = fopen("recordes.txt", "w");
+    if(ranking == NULL){
+        interfaceSalvaJogador();
+        cputsxy(28, 15, "ERRO NA LEITURA!");
+        fclose(ranking);
+    }else{
+        for(i=0;i<numJogadores;i++){
+            fprintf(ranking, "%s;%d\n", nome[i], pontuacao[i]);
+        }
+        fclose(ranking);
+    }
+}
+void ordenaRanking(char nome[][TAMSTRING], int pontuacao[], int numJogadores){//ordena o ranking
+    int i, j, k, aux;
+    char auxstring[TAMSTRING];//auxiliar para guardar a string
+    for (i = 0; i < numJogadores - 1; i++){//selection sort
+        k = i;//variavel para varreer os indices
+        for (j = (i+1); j < numJogadores; j++) {
+            if(pontuacao[j] > pontuacao[k]){//verifica se a pontuacao do jogador e
+                k = j;
+            }
+        }
+        if (i != k) {//verifica se nao e o mesmo elemtno
+            aux = pontuacao[i];//auxiliar para fazer a troca entre as posicoes
+            strcpy(auxstring, nome[i]);
+            pontuacao[i] = pontuacao[k];
+            strcpy(nome[i], nome[k]);
+            pontuacao[k] = aux;
+            strcpy(nome[k], auxstring);
+    }
+  }
+}
+
+
+int numeroJogadores(FILE *ranking){
+    char buffer[MAXBUFF];
+    int numJogadores = 0;
+    ranking = fopen("recordes.txt", "r");
+    if(ranking == NULL){
+        interfaceSalvaJogador();
+        cputsxy(28, 15, "ERRO NA LEITURA!");
+        fclose(ranking);
+        return 0;
+    }else{
+        rewind(ranking);
+        while(!feof(ranking)){
+            fgets(buffer, MAXBUFF, ranking);
+            numJogadores++;
+        }
+        fclose(ranking);
+        return numJogadores - 1;
+    }
+}
+void comparaPontuacao(FILE *ranking, SUBMARINO jogador, char nome[], int *pontuacao){
+    ranking = fopen("recordes.txt", "r");
+    if(ranking == NULL){
+        interfaceSalvaJogador();
+        cputsxy(28, 15, "ERRO NA LEITURA!");
+        fclose(ranking);
+    }else{
+        if(jogador.pontuacao > *pontuacao){
+            strcpy(nome, jogador.nome);
+            *pontuacao = jogador.pontuacao;
+        }
+        fclose(ranking);
+    }
+}
+void gravaPontuacao(FILE *ranking, SUBMARINO jogador){
+    char buffer[MAXBUFF];
+    char nome[MAXARQ][TAMSTRING];
+    int pontuacao[MAXARQ];
+    int i = 0;
+    int numJogadores = 0;
+    ranking = fopen("recordes.txt", "r");
+    if(ranking == NULL){
+        interfaceSalvaJogador();
+        cputsxy(28, 15, "ERRO NA LEITURA!");
+        fclose(ranking);
+    }else{
+        rewind(ranking);
+        while(!feof(ranking)){
+            if(fgets(buffer, MAXBUFF, ranking)){
+                strcpy(nome[i], strtok(buffer, ";"));
+                pontuacao[i] = atoi(strtok(NULL, ";"));
+            }
+            numJogadores++;
+            i++;
+        }
+        fclose(ranking);
+        comparaPontuacao(ranking, jogador, nome[i-2], &pontuacao[i-2]);
+        ordenaRanking(nome, pontuacao, numJogadores-1);
+        salvaRankingOrdenado(ranking, nome, pontuacao, numJogadores-1);
+    }
+}
+
+void salvaJogador(FILE *ranking, SUBMARINO *jogador){
+    int flagSalvaJogador = 0;
+    int numJogadores = 0;
+    interfaceSalvaJogador();
+    do{
+        gotoxy(35, 13);
+        scanf("%s", &(*jogador).nome);//le o nome do jogador
+        numJogadores = numeroJogadores(ranking);
+        ranking = fopen("recordes.txt", "a+");
+        if(ranking == NULL){
+            interfaceSalvaJogador();
+            cputsxy(28, 15, "ERRO NA LEITURA!");
+            flagSalvaJogador = 1;
+            fclose(ranking);
+        }else{
+            if(numJogadores < MAXARQ){
+                fprintf(ranking, "%s;%d\n", (*jogador).nome, (*jogador).pontuacao);
+                flagSalvaJogador = 1;
+                fclose(ranking);
+                gravaPontuacao(ranking, *jogador);
+            }else{
+                fclose(ranking);
+                gravaPontuacao(ranking, *jogador);
+                flagSalvaJogador = 1;
+            }
+        }
+    }while(flagSalvaJogador != 1);
+
+}
+
+void escreveRecordes(char nome[][TAMSTRING], int pont[]){
+    int i, j = 5;
+    for(i=0;i<MAXARQ - 1;i++){
+        if(pont[i] != 0 && nome[i]){
+            cputsxy(29, j, nome[i]);//desenha o nome do jogador na tela recordes
+            gotoxy(48, j);
+            printf("%d", pont[i]);//desenha a pontuacao do jogadorna tela
+            j+=2;
+        }
+    }
+}
+void leRecordes(FILE *ranking){//escreve os recordes no arquivo
+    char buffer[MAXBUFF];
+    char nome[MAXARQ][TAMSTRING];
+    int pont[MAXARQ];
+    int i = 0;
+    int numJogadores = 0;
+    ranking = fopen("recordes.txt", "r");
+    if(ranking == NULL){
+        interfaceSalvaJogador();
+        cputsxy(28, 15, "ERRO NA LEITURA!");
+        fclose(ranking);
+    }else{
+        rewind(ranking);
+        while(!feof(ranking)){
+            if(fgets(buffer, MAXBUFF, ranking)){
+                strcpy(nome[i], strtok(buffer, ";"));
+                pont[i] = atoi(strtok(NULL, ";"));
+            }
+            i++;
+        }
+        fclose(ranking);
+        escreveRecordes(nome, pont);
+    }
+}
+
 void recordes(FILE *ranking){//imprime a funcao de rocordes no menu
     char tecla;
     interfaceRecordes();
-    escreveRecordes(ranking);
+    leRecordes(ranking);
     do{
         if(kbhit()){
             tecla = getch();
         }
     }while(tecla != ESC);
 }
+
+
+
+
 void interfaceSalvaJogo(){//desenha a interface do salvaJogo
     textcolor(LIGHTCYAN);
     cputsxy(25, 10, "*********************************");
