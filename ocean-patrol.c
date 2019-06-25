@@ -229,9 +229,9 @@ void comparaPontuacao(FILE *ranking, SUBMARINO jogador, char nome[], int *pontua
     }
 }
 void gravaPontuacao(FILE *ranking, SUBMARINO jogador){
-    char buffer[MAXBUFF];
-    char nome[MAXARQ][TAMSTRING];
-    int pontuacao[MAXARQ];
+    char buffer[MAXBUFF] = {};
+    char nome[MAXARQ][TAMSTRING] = {};
+    int pontuacao[MAXARQ] = {};
     int i = 0;
     int numJogadores = 0;
     ranking = fopen("recordes.txt", "r");
@@ -263,7 +263,6 @@ void salvaJogador(FILE *ranking, SUBMARINO *jogador){
     do{
         gotoxy(35, 13);
         scanf("%s", &(*jogador).nome);//le o nome do jogador
-        numJogadores = numeroJogadores(ranking);
         ranking = fopen("recordes.txt", "a+");
         if(ranking == NULL){
             interfaceSalvaJogador();
@@ -271,6 +270,7 @@ void salvaJogador(FILE *ranking, SUBMARINO *jogador){
             flagSalvaJogador = 1;
             fclose(ranking);
         }else{
+            numJogadores = numeroJogadores(ranking);
             if(numJogadores < MAXARQ){
                 fprintf(ranking, "%s;%d\n", (*jogador).nome, (*jogador).pontuacao);
                 flagSalvaJogador = 1;
@@ -298,9 +298,9 @@ void escreveRecordes(char nome[][TAMSTRING], int pont[]){
     }
 }
 void leRecordes(FILE *ranking){//escreve os recordes no arquivo
-    char buffer[MAXBUFF];
-    char nome[MAXARQ][TAMSTRING];
-    int pont[MAXARQ];
+    char buffer[MAXBUFF] = {};
+    char nome[MAXARQ][TAMSTRING] = {};
+    int pont[MAXARQ] = {};
     int i = 0;
     int numJogadores = 0;
     ranking = fopen("recordes.txt", "r");
