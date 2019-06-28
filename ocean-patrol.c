@@ -88,13 +88,13 @@ typedef struct obstaculo{//estrutura dos obstaculos (submarinos inimgos ou mergu
     int orientacao;//e a orientacao (1 - direita ou 0 - esquerda) dos obstaculos
     int status;//status do obstaculo(1 - capturado 2 - livre)
 } OBSTACULO;
-typedef struct missil{
+typedef struct missil{//estrutura do tiro
     COORD posicao;
     int orientacao;
     int estado;// booleano 0 ou 1
 } TIRO;
 
-void interfaceCreditos(){
+void interfaceCreditos(){//desenha a interface do menu creditos
     textcolor(LIGHTCYAN);
     cputsxy(15, 3, "*****************************************************");
     textcolor(YELLOW);
@@ -113,7 +113,7 @@ void interfaceCreditos(){
     textcolor(LIGHTCYAN);
     cputsxy(15, 23, "*****************************************************");
 }
-void creditos(){
+void creditos(){//desenha a interface do menu de credsitos
     char tecla;
     interfaceCreditos();
     do{
@@ -133,7 +133,7 @@ void interfaceSalvaJogador(){//desenha a interface do salva jogador
     textcolor(LIGHTCYAN);
     cputsxy(25, 16, "*********************************");
 }
-void interfaceRecordes(){
+void interfaceRecordes(){//desenha a interface dos recordes
     char cell = '*';
     int i, j = 1;
     textcolor(YELLOW);
@@ -157,9 +157,7 @@ void interfaceRecordes(){
         j++;
     }
 }
-
-
-void salvaRankingOrdenado(FILE *ranking, char nome[][TAMSTRING], int pontuacao[], int numJogadores){
+void salvaRankingOrdenado(FILE *ranking, char nome[][TAMSTRING], int pontuacao[], int numJogadores){//salva o ranking ordenado (insertion sort)
     int i;
     ranking = fopen("recordes.txt", "w");
     if(ranking == NULL){
@@ -193,9 +191,7 @@ void ordenaRanking(char nome[][TAMSTRING], int pontuacao[], int numJogadores){//
     }
   }
 }
-
-
-int numeroJogadores(FILE *ranking){
+int numeroJogadores(FILE *ranking){//conta o numero de jogadores presnentes no arquivo txt
     char buffer[MAXBUFF];
     int numJogadores = 0;
     ranking = fopen("recordes.txt", "r");
@@ -214,7 +210,7 @@ int numeroJogadores(FILE *ranking){
         return numJogadores - 1;
     }
 }
-void comparaPontuacao(FILE *ranking, SUBMARINO jogador, char nome[], int *pontuacao){
+void comparaPontuacao(FILE *ranking, SUBMARINO jogador, char nome[], int *pontuacao){//compara a pontuacao do ultimo colocado
     ranking = fopen("recordes.txt", "r");
     if(ranking == NULL){
         interfaceSalvaJogador();
@@ -228,7 +224,7 @@ void comparaPontuacao(FILE *ranking, SUBMARINO jogador, char nome[], int *pontua
         fclose(ranking);
     }
 }
-void gravaPontuacao(FILE *ranking, SUBMARINO jogador){
+void gravaPontuacao(FILE *ranking, SUBMARINO jogador){//grava o nome e a pontuacao dos jogadores em variaveis
     char buffer[MAXBUFF] = {};
     char nome[MAXARQ][TAMSTRING] = {};
     int pontuacao[MAXARQ] = {};
@@ -256,13 +252,13 @@ void gravaPontuacao(FILE *ranking, SUBMARINO jogador){
     }
 }
 
-void salvaJogador(FILE *ranking, SUBMARINO *jogador){
+void salvaJogador(FILE *ranking, SUBMARINO *jogador){//sala o nome a a pontuacao do jogador no arquivo
     int flagSalvaJogador = 0;
     int numJogadores = 0;
     interfaceSalvaJogador();
     do{
         gotoxy(35, 13);
-        scanf("%s", &(*jogador).nome);//le o nome do jogador
+        scanf("%15s", &(*jogador).nome);//le o nome do jogador
         ranking = fopen("recordes.txt", "a+");
         if(ranking == NULL){
             interfaceSalvaJogador();
@@ -285,7 +281,6 @@ void salvaJogador(FILE *ranking, SUBMARINO *jogador){
     }while(flagSalvaJogador != 1);
 
 }
-
 void escreveRecordes(char nome[][TAMSTRING], int pont[]){
     int i, j = 5;
     for(i=0;i<MAXARQ - 1;i++){
@@ -321,7 +316,6 @@ void leRecordes(FILE *ranking){//escreve os recordes no arquivo
         escreveRecordes(nome, pont);
     }
 }
-
 void recordes(FILE *ranking){//imprime a funcao de rocordes no menu
     char tecla;
     interfaceRecordes();
@@ -332,10 +326,6 @@ void recordes(FILE *ranking){//imprime a funcao de rocordes no menu
         }
     }while(tecla != ESC);
 }
-
-
-
-
 void interfaceSalvaJogo(){//desenha a interface do salvaJogo
     textcolor(LIGHTCYAN);
     cputsxy(25, 10, "*********************************");
@@ -346,13 +336,18 @@ void interfaceSalvaJogo(){//desenha a interface do salvaJogo
     textcolor(LIGHTCYAN);
     cputsxy(25, 16, "*********************************");
 }
+
+void leNomeJogo(char nomeArquivo[]){
+    gotoxy(35, 13);
+    scanf("%s", &(*nomeArquivo));
+    strcat(nomeArquivo, ".bin");
+}
 void salvaJogo(FILE *jogo, SUBMARINO jogador){//salvo o jogo
     int flagSalvaJogo = 0;
     char nomeArquivo[TAMSTRING];
     interfaceSalvaJogo();
     do{
-        gotoxy(35, 13);
-        scanf("%s", nomeArquivo);//ne o onme do arquivo
+        leNomeJogo(nomeArquivo);
         jogo = fopen(nomeArquivo, "wb");//abre arquivo para poder ser alterado
         if(jogo == NULL){//verifica se o arquivo nao abriu
             interfaceSalvaJogo();
@@ -370,8 +365,7 @@ void salvaJogo(FILE *jogo, SUBMARINO jogador){//salvo o jogo
         }
     }while(flagSalvaJogo == 1);
 }
-
-void moveSeletorPause(char *select, int *posSX, int *posSY){
+void moveSeletorPause(char *select, int *posSX, int *posSY){//move o seletor do pause
     textcolor(YELLOW);
     putchxy(*posSX, *posSY, '>');
     *select = getch();
@@ -400,7 +394,7 @@ void moveSeletorPause(char *select, int *posSX, int *posSY){
         }//switch
     }//if select
 }
-void coloreLinhaPause(int posSY){
+void coloreLinhaPause(int posSY){//colore a linha do pause onde o seletor esta
     switch(posSY){//verifica em qual posicao o seletor esta
     case(13)://resume game
         textcolor(DARKGRAY);
@@ -424,7 +418,7 @@ void coloreLinhaPause(int posSY){
         cputsxy(25, 15, "              SAIR               ");
     }
 }
-void interfacePause(){
+void interfacePause(){//desenha a interface do pause
     textcolor(LIGHTCYAN);
     cputsxy(25, 10, "*********************************");
     textcolor(YELLOW);
@@ -437,7 +431,7 @@ void interfacePause(){
     textcolor(LIGHTCYAN);
     cputsxy(25, 16, "*********************************");
 }
-void apagaOxigenio(int posO2X){
+void apagaOxigenio(int posO2X){//apaga a cada segundo uma barra de oxigenio
     int i;
     textbackground(0);
     for(i=posO2X;i<48;i++){//constroi a barra de oxigenio
@@ -449,7 +443,7 @@ void desenhaTiro(TIRO missil){//imprime o tiro na posicao indicada
     textcolor(YELLOW);
     putchxy(missil.posicao.X, missil.posicao.Y, '=');
 }
-void apagaTiro(TIRO missil){
+void apagaTiro(TIRO missil){//apaga o rastro do tiro
     putchxy(missil.posicao.X, missil.posicao.Y, ' ');
 }
 void atualizaPosicaoTiro(TIRO *missil){//atualiza a posicao do missil de acordo com o status do missil e a orientacao do mesmo
@@ -592,7 +586,7 @@ void largaMergulhadores(SUBMARINO *jogador, OBSTACULO obstaculo[]){//quando o jo
         }//if
     }//if
 }
-void desenhaVidas(SUBMARINO jogador){
+void desenhaVidas(SUBMARINO jogador){//desenha as vidas do jogador na tela
     textcolor(YELLOW);
     if(jogador.vidas == 3){//se o jogador tem 3 vidas
         cputsxy(7, 1, "<3 <3 <3");
@@ -928,7 +922,7 @@ void inicializaJogador(SUBMARINO *jogador){//inicializa as configuracoes do joga
     (*jogador).pontuacao = INICIOPONTUACAOJOGADOR;//o jogador inicia com 0 pontos
     (*jogador).oxigenio = INICIOOXIGENIOJOGADOR;//o jogador comeca com 30 pontos de oxigenio
 }
-void pause(FILE *jogo, SUBMARINO *jogador, int *finalizaJogo){
+void pause(FILE *jogo, SUBMARINO *jogador, int *finalizaJogo){//funcao de pausar o jogo
     int posSX = 25, posSY = 13;//posicao inicial do seletor. comeca em 'resume game'
     int ansPause = 0;//flag para fim do loop do 'pause'
     char select;//guarda o valor do teclado para mover seletor
@@ -1006,8 +1000,7 @@ void interfaceProcuraArquivo(){//desenha a interface de procurar arquivo
 }
 int procuraJogo(FILE **jogo){//faz a busca se o arquivo do jogo existe (passado como ponteiro duplo pois acessa o ponteiro do endereco da memoria do arquivo)
     char nomeArquivo[TAMSTRING];//nome do arquivo a ser procurado deve terminar com .bin
-    gotoxy(35, 13);//indica a posicao para realizar o eco
-    scanf("%s", nomeArquivo);//le o nome do arquivo a ser procurado
+    leNomeJogo(nomeArquivo);
     *jogo = fopen(nomeArquivo, "rb");//atricui o arquivo aberto para jogo
     if(*jogo == NULL){//verifica se nao teve sucesso na abertura
         return 1;
@@ -1020,7 +1013,6 @@ void abreJogo(FILE *jogo, FILE *ranking, SUBMARINO jogador){//faz a abertura do 
         clrscr();
         gameInterface();
         atualizaMergulhadores(jogador);
-
         gameLoop(jogo, ranking, &jogador);
         fclose(jogo);
         clrscr();
@@ -1031,7 +1023,7 @@ void abreJogo(FILE *jogo, FILE *ranking, SUBMARINO jogador){//faz a abertura do 
         procuraJogo(&jogo);
     }
 }
-void interfaceCarregaJogo(){
+void interfaceCarregaJogo(){//desenha  interface para carregar o jogo
     textcolor(LIGHTCYAN);
     cputsxy(25, 10, "*********************************");
     textcolor(YELLOW);
@@ -1043,7 +1035,7 @@ void interfaceCarregaJogo(){
     textcolor(LIGHTCYAN);
     cputsxy(25, 16, "*********************************");
 }
-void moveSeletorCarrega(char *select, int *posSX, int *posSY){
+void moveSeletorCarrega(char *select, int *posSX, int *posSY){//move o seletor do menu carregajogo
     textcolor(YELLOW);
     putchxy(*posSX, *posSY, '>');
     *select = getch();
@@ -1072,7 +1064,7 @@ void moveSeletorCarrega(char *select, int *posSX, int *posSY){
         }//switch
     }//if select
 }
-void coloreLinhaCarrega(int posSY){
+void coloreLinhaCarrega(int posSY){//colore a linha onde oseletor do menu carregajogo esta
     switch(posSY){//verifica em qual posicao o seletor esta
     case(13)://resume game
         textcolor(DARKGRAY);
@@ -1087,7 +1079,7 @@ void coloreLinhaCarrega(int posSY){
         cputsxy(25, 14, "               SAIR              ");
     }
 }
-void carregaJogo(FILE *jogo, FILE *ranking, SUBMARINO *jogador){
+void carregaJogo(FILE *jogo, FILE *ranking, SUBMARINO *jogador){//carrega o jgo salvo em .bin
     int posSX = 25, posSY = 13;//posicao inicial do seletor. comeca em 'buscar um arquivo'
     int ansCarrega = 0;//flag para fim do loop do 'carregaJogo'
     char select;//guarda o valor do teclado para mover seletor
