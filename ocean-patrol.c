@@ -30,7 +30,7 @@
 #define INICIOXOXIGENIO 41//posicao inicial do oxigenio
 #define NUMRECORDES 10//numero de recordes que serao escritos no ranking
 
-//OBSTACULO
+//OBSTACULOS
 #define NADA 0//para retirar o tipo do obstaculo para ele ser reinicializado
 #define INIMIGO 1//para identificar o tipo de obstaculo
 #define MERGULHADOR 2//para identificar o tipo de obstaculo
@@ -60,19 +60,8 @@
 #define LIGADO 1//se o tiro foi disparado
 #define DESLIGADO 0//se o tiro nao foi disparado
 
-/*=========   PROTOTIPOS   =========*/
-void menu();
-void imprimeBordaMenu();//imprime a borda amarela do menu
-void moveSeletor(char *select, int *posSX, int *posSY);//move o seletor do menu
-void coloreLinhaMenu(int *posSY);//colore a linha na qual o seletor esta
-void gameInterface();//imprime a interface
-void desenhaAgua();//desenha a agua
 
-/*=========    PRECISA:    =========*/
-//fazer funcao para excluir ordenar ranking no arquivo texto
-//ajustar bug de spawn na tela dos obstaculos em posicoes correntes
-
-
+/*============== DEFINICAO DE ESTRUTURAS ================*/
 typedef struct submarino{//estrutura do jogador
     COORD posicao;//COORD e uma estrutura com X e Y
     char nome[TAMSTRING];
@@ -94,6 +83,76 @@ typedef struct missil{//estrutura do tiro
     int estado;// booleano 0 ou 1
 } TIRO;
 
+
+/*=========   PROTOTIPOS   =========*/
+
+void menu();
+void imprimeBordaMenu();//imprime a borda amarela do menu
+void moveSeletor(char *select, int *posSX, int *posSY);//move o seletor do menu
+void coloreLinhaMenu(int *posSY);//colore a linha na qual o seletor esta
+void gameInterface();//imprime a interface
+void desenhaAgua();//desenha a agua
+void carregaJogo(FILE *jogo, FILE *ranking, SUBMARINO *jogador);//carrega o jogo salvo em .bin
+void interfaceMenu();//desenha a interface do menu
+void coloreLinhaCarrega(int posSY);//colore a linha onde o seletor do menu carregajogo esta
+void moveSeletorCarrega(char *select, int *posSX, int *posSY);//move o seletor do menu carregajogo
+void interfaceCarregaJogo();//desenha  interface para carregar o jogo
+void interfaceCarregaJogo();//desenha  interface para carregar o jogo
+void abreJogo(FILE *jogo, FILE *ranking, SUBMARINO jogador);//faz a abertura do jogo caerregado
+int procuraJogo(FILE **jogo);//faz a busca se o arquivo do jogo existe (passado como ponteiro duplo pois acessa o ponteiro do endereco da memoria do arquivo)
+void interfaceProcuraArquivo();//desenha a interface de procurar arquivo
+void gameLoop(FILE *jogo, FILE *ranking, SUBMARINO *jogador);//laco do jogo
+void pause(FILE *jogo, SUBMARINO *jogador, int *finalizaJogo);//funcao de pausar o jogo
+void inicializaJogador(SUBMARINO *jogador);//inicializa as configuracoes do jogador
+void controlaJogador(SUBMARINO *jogador, char *flag_fim);//funcao para mover jogador(submarino)
+void testaColisaoTiro(SUBMARINO *jogador,TIRO *missil, OBSTACULO obstaculo[]);//testa se o tiro colidiu com algum obstaculo
+void testaColisao(SUBMARINO *jogador, OBSTACULO obstaculo[]);//verifica se houve colisao entre o jogador e os obstaculos
+void geraObstaculo(OBSTACULO obstaculo[]);//inicializa os obstaculos randomicamente
+void moveObstaculo(OBSTACULO obstaculo[]);//move os obstaculos
+void desenhaObstaculo(OBSTACULO obstaculo[], int i);//desenha os obstaculos nas posicoes randomicas
+void apagaObstaculo(OBSTACULO obstaculo[], int i);//apaga o rastro dos obstaculos
+void desenhaSubmarino(SUBMARINO jogador);//funcao para desenhar o jogador
+void apagaSubmarino(SUBMARINO jogador);//funcao para apagar o rastro do jogador
+int fimJogo(int finalizaJogo, SUBMARINO jogador);//verifica as possibilidades de gameOver ou fechar
+void desenhaVidas(SUBMARINO jogador);//desenha as vidas do jogador na tela
+void largaMergulhadores(SUBMARINO *jogador, OBSTACULO obstaculo[]);//quando o jogador atinge a superficie, libera os mergulhadores
+void pontosMergulhador(SUBMARINO *jogador);//acrescenta 20 ponto para cada mergulhador salvo
+void loopPorSegundo(SUBMARINO *jogador, int *flagGameLoop, int *posO2X);//funcao para incrementar a pontuacao de 1 em 1 de acordo com o valor do sleep
+void pontuacao(SUBMARINO *jogador);//funcao para atualzar o valor da pontuacao
+int atualizaOxigenio(SUBMARINO *jogador, int *posO2X);//desenha a barra de oxigenio
+void atualizaMergulhadores(SUBMARINO jogador);//desenha os jogadores capturados na tela
+void tiroJogador (char tecla, SUBMARINO jogador, TIRO *missil);//inicializa as caracteristicas da estrutura TIRO
+void atualizaPosicaoTiro(TIRO *missil);//atualiza a posicao do missil de acordo com o status do missil e a orientacao do mesmo
+void apagaTiro(TIRO missil);//apaga o rastro do tiro
+void desenhaTiro(TIRO missil);//imprime o tiro na posicao indicada
+void apagaOxigenio(int posO2X);//apaga a cada segundo uma barra de oxigenio
+void interfacePause();//desenha a interface do pause
+void coloreLinhaPause(int posSY);//colore a linha do pause onde o seletor esta
+void moveSeletorPause(char *select, int *posSX, int *posSY);//move o seletor do pause
+void salvaJogo(FILE *jogo, SUBMARINO jogador);//salvo o jogo
+void leNomeJogo(char nomeArquivo[]);
+void interfaceSalvaJogo();//desenha a interface do salvaJogo
+void recordes(FILE *ranking);//imprime a funcao de rocordes no menu
+void leRecordes(FILE *ranking);//escreve os recordes no arquivo
+void escreveRecordes(char nome[][TAMSTRING], int pont[]);
+void salvaJogador(FILE *ranking, SUBMARINO *jogador);//sala o nome a a pontuacao do jogador no arquivo
+void gravaPontuacao(FILE *ranking, SUBMARINO jogador);//grava o nome e a pontuacao dos jogadores em variaveis
+void comparaPontuacao(FILE *ranking, SUBMARINO jogador, char nome[], int *pontuacao);//compara a pontuacao do ultimo colocado
+int numeroJogadores(FILE *ranking);//conta o numero de jogadores presnentes no arquivo txt
+void ordenaRanking(char nome[][TAMSTRING], int pontuacao[], int numJogadores);//ordena o ranking
+void salvaRankingOrdenado(FILE *ranking, char nome[][TAMSTRING], int pontuacao[], int numJogadores);//salva o ranking ordenado (insertion sort)
+void interfaceRecordes();//desenha a interface dos recordes
+void interfaceSalvaJogador();//desenha a interface do salva jogador
+void creditos();//desenha a interface do menu de creditos
+void interfaceCreditos();//desenha a interface do menu creditos
+
+
+/*============== FUNCOES ================*/
+
+int main(){
+    menu();
+    return 0;
+}
 void interfaceCreditos(){//desenha a interface do menu creditos
     textcolor(LIGHTCYAN);
     cputsxy(15, 3, "*****************************************************");
@@ -159,14 +218,14 @@ void interfaceRecordes(){//desenha a interface dos recordes
 }
 void salvaRankingOrdenado(FILE *ranking, char nome[][TAMSTRING], int pontuacao[], int numJogadores){//salva o ranking ordenado (insertion sort)
     int i;
-    ranking = fopen("recordes.txt", "w");
-    if(ranking == NULL){
+    ranking = fopen("recordes.txt", "w");//abre o arquvivo para escrita (cria um novo)
+    if(ranking == NULL){//verifica se deu erro na abetura
         interfaceSalvaJogador();
         cputsxy(28, 15, "ERRO NA LEITURA!");
         fclose(ranking);
     }else{
         for(i=0;i<numJogadores;i++){
-            fprintf(ranking, "%s;%d\n", nome[i], pontuacao[i]);
+            fprintf(ranking, "%s;%d\n", nome[i], pontuacao[i]);//printa os nomes e a pontuacao dos jogadores ordenadamente no ranking
         }
         fclose(ranking);
     }
@@ -230,17 +289,17 @@ void gravaPontuacao(FILE *ranking, SUBMARINO jogador){//grava o nome e a pontuac
     int pontuacao[MAXARQ] = {};
     int i = 0;
     int numJogadores = 0;
-    ranking = fopen("recordes.txt", "r");
-    if(ranking == NULL){
+    ranking = fopen("recordes.txt", "r");//abre o arquivo para leitura
+    if(ranking == NULL){//verifica se deu erro na abertura do arquivo
         interfaceSalvaJogador();
         cputsxy(28, 15, "ERRO NA LEITURA!");
         fclose(ranking);
     }else{
-        rewind(ranking);
-        while(!feof(ranking)){
-            if(fgets(buffer, MAXBUFF, ranking)){
-                strcpy(nome[i], strtok(buffer, ";"));
-                pontuacao[i] = atoi(strtok(NULL, ";"));
+        rewind(ranking);//retorna ao inicio do arquvo
+        while(!feof(ranking)){//le o arquivo linha a linha
+            if(fgets(buffer, MAXBUFF, ranking)){//verifica se pode ler linha
+                strcpy(nome[i], strtok(buffer, ";"));//salva o nome do jogador
+                pontuacao[i] = atoi(strtok(NULL, ";"));//salva a pontuacao do jogador
             }
             numJogadores++;
             i++;
@@ -251,7 +310,6 @@ void gravaPontuacao(FILE *ranking, SUBMARINO jogador){//grava o nome e a pontuac
         salvaRankingOrdenado(ranking, nome, pontuacao, numJogadores-1);
     }
 }
-
 void salvaJogador(FILE *ranking, SUBMARINO *jogador){//sala o nome a a pontuacao do jogador no arquivo
     int flagSalvaJogador = 0;
     int numJogadores = 0;
@@ -259,15 +317,15 @@ void salvaJogador(FILE *ranking, SUBMARINO *jogador){//sala o nome a a pontuacao
     do{
         gotoxy(35, 13);
         scanf("%15s", &(*jogador).nome);//le o nome do jogador
-        ranking = fopen("recordes.txt", "a+");
-        if(ranking == NULL){
+        ranking = fopen("recordes.txt", "a+");//abre o jogo para append e se o arquivo ano existir cria um
+        if(ranking == NULL){//verifica se deu erro na abertura
             interfaceSalvaJogador();
             cputsxy(28, 15, "ERRO NA LEITURA!");
             flagSalvaJogador = 1;
             fclose(ranking);
         }else{
-            numJogadores = numeroJogadores(ranking);
-            if(numJogadores < MAXARQ){
+            numJogadores = numeroJogadores(ranking);//conta o numero de jogadores
+            if(numJogadores < MAXARQ){//verifica se o numero de jogadores atuais no arquivo é menor que a quantidade maxima suportada pelo arquivo
                 fprintf(ranking, "%s;%d\n", (*jogador).nome, (*jogador).pontuacao);
                 flagSalvaJogador = 1;
                 fclose(ranking);
@@ -279,7 +337,6 @@ void salvaJogador(FILE *ranking, SUBMARINO *jogador){//sala o nome a a pontuacao
             }
         }
     }while(flagSalvaJogador != 1);
-
 }
 void escreveRecordes(char nome[][TAMSTRING], int pont[]){
     int i, j = 5;
@@ -298,8 +355,8 @@ void leRecordes(FILE *ranking){//escreve os recordes no arquivo
     int pont[MAXARQ] = {};
     int i = 0;
     int numJogadores = 0;
-    ranking = fopen("recordes.txt", "r");
-    if(ranking == NULL){
+    ranking = fopen("recordes.txt", "r");//abre o arquivo para modo de leitura
+    if(ranking == NULL){//verifica se deu erro na leitura
         interfaceSalvaJogador();
         cputsxy(28, 15, "ERRO NA LEITURA!");
         fclose(ranking);
@@ -307,7 +364,7 @@ void leRecordes(FILE *ranking){//escreve os recordes no arquivo
         rewind(ranking);
         while(!feof(ranking)){
             if(fgets(buffer, MAXBUFF, ranking)){
-                strcpy(nome[i], strtok(buffer, ";"));
+                strcpy(nome[i], strtok(buffer, ";"));//copia o nome do jogador
                 pont[i] = atoi(strtok(NULL, ";"));
             }
             i++;
@@ -336,11 +393,10 @@ void interfaceSalvaJogo(){//desenha a interface do salvaJogo
     textcolor(LIGHTCYAN);
     cputsxy(25, 16, "*********************************");
 }
-
 void leNomeJogo(char nomeArquivo[]){
     gotoxy(35, 13);
     scanf("%s", &(*nomeArquivo));
-    strcat(nomeArquivo, ".bin");
+    strcat(nomeArquivo, ".bin");//concatena ".bin" no fim da sring
 }
 void salvaJogo(FILE *jogo, SUBMARINO jogador){//salvo o jogo
     int flagSalvaJogo = 0;
@@ -970,12 +1026,12 @@ void gameLoop(FILE *jogo, FILE *ranking, SUBMARINO *jogador){//laco do jogo
     pontuacao(jogador);
     do{
         Sleep(25);//para deixar mais lento o jogo
-        if(tecla == ESC){
+        if(tecla == ESC){//verifica se o jogador teclou ESC para dar pause no jogo
             pause(jogo, jogador, &finalizaJogo);
             apagaOxigenio(posO2X);
         }
         loopPorSegundo(jogador,&flagGameLoop, &posO2X);//funcao para atualizar a pontuacao
-        geraObstaculo(obstaculo);
+        geraObstaculo(obstaculo);//ggera um obstaculo aleatoriamente
         controlaJogador(jogador, &tecla);//chama attraves de ponteiro pos alterara os valores da posicao do submarino
         tiroJogador(tecla, *jogador, &missil);
         largaMergulhadores(jogador, obstaculo);
@@ -987,7 +1043,6 @@ void gameLoop(FILE *jogo, FILE *ranking, SUBMARINO *jogador){//laco do jogo
         salvaJogador(ranking, jogador);
     }
 }
-
 void interfaceProcuraArquivo(){//desenha a interface de procurar arquivo
     textcolor(LIGHTCYAN);
     cputsxy(25, 10, "*********************************");
@@ -1009,12 +1064,11 @@ int procuraJogo(FILE **jogo){//faz a busca se o arquivo do jogo existe (passado 
     }
 }
 void abreJogo(FILE *jogo, FILE *ranking, SUBMARINO jogador){//faz a abertura do jogo caerregado
-    if(fread(&jogador, sizeof(jogador), 1, jogo) == 1){
+    if(fread(&jogador, sizeof(jogador), 1, jogo) == 1){//caso o arquivo possa ser lido
         clrscr();
         gameInterface();
         atualizaMergulhadores(jogador);
         gameLoop(jogo, ranking, &jogador);
-        fclose(jogo);
         clrscr();
     }else{
         interfaceProcuraArquivo();
@@ -1132,11 +1186,6 @@ void interfaceMenu(){//desenha a interface do menu
     cputsxy(7, 20," .     /    ---------    \\ ");
     cputsxy(7, 21,"  .   |     ---------     |");
     cputsxy(7, 22,"    8-=\\_________________/");
-}
-
-int main(){
-    menu();
-    return 0;
 }
 void menu(){
     char select;//guarda o valor do teclado para mover o seletor
